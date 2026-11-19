@@ -1,10 +1,10 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { Menu, QrCode, LogOut } from "lucide-react";
 import { useAccount } from "@/context/AccountContext";
 import { Button } from "@/components/ui/Button";
-import { AccountSwitcher } from "./AccountSwitcher";
 
 interface AppHeaderProps {
   title: string;
@@ -64,8 +64,40 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           </span>
         </div>
 
-        {/* Dynamic Demo Persona Switcher (5 Accounts) */}
-        <AccountSwitcher />
+        {/* Clean, Non-Intrusive Active User Identity Badge */}
+        <Link
+          href="/app/account"
+          className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 transition-all shadow-sm group"
+          title="View Account Details"
+        >
+          <div className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={currentUser.avatarUrl}
+              alt={currentUser.name}
+              className="w-7 h-7 rounded-full object-cover ring-1 ring-slate-300 group-hover:ring-[#3D5BFF] transition-all"
+            />
+            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#10B981] rounded-full border border-white" />
+          </div>
+
+          <div className="text-left hidden sm:block">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-bold text-[#111B32] group-hover:text-[#3D5BFF] transition-colors">
+                {currentUser.name}
+              </span>
+              <span className="text-[9px] font-mono font-bold uppercase text-[#3D5BFF] bg-[#3D5BFF]/10 px-1.5 py-0.2 rounded">
+                {currentUser.role}
+              </span>
+            </div>
+            <p className="text-[10px] font-mono text-slate-500">
+              {currentUser.currency === "NGN"
+                ? `₦${currentUser.availableBalanceNgn.toLocaleString("en-NG")}`
+                : currentUser.currency === "GBP"
+                ? `£${currentUser.foreignBalance?.amount.toLocaleString("en-GB")}`
+                : `€${currentUser.foreignBalance?.amount.toLocaleString("de-DE")}`}
+            </p>
+          </div>
+        </Link>
 
         {/* Sign Out Button */}
         <Button
@@ -75,9 +107,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             window.location.href = "/auth/login";
           }}
           leftIcon={<LogOut className="w-3.5 h-3.5 text-slate-500" />}
-          className="hidden sm:inline-flex text-slate-700 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50"
+          className="text-slate-700 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50"
         >
-          Sign Out
+          <span className="hidden sm:inline">Sign Out</span>
         </Button>
       </div>
     </header>

@@ -178,20 +178,22 @@ export const AppSidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
           </div>
         </div>
 
-        {/* Sign Out Action */}
+        {/* Bottom Left Sign Out Button */}
         <div className="pt-2">
           <button
             onClick={() => {
               if (onClose) onClose();
               window.location.href = "/auth/login";
             }}
-            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all"
+            className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-rose-400 hover:text-white hover:bg-rose-600/20 border border-rose-500/20 hover:border-rose-500/40 transition-all group shadow-sm"
           >
             <div className="flex items-center gap-2.5">
-              <LogOut className="w-4 h-4 text-rose-400" />
-              <span>Sign Out</span>
+              <LogOut className="w-4 h-4 text-rose-400 group-hover:text-rose-300 transition-colors" />
+              <span>Sign Out &amp; Switch</span>
             </div>
-            <span className="text-[10px] font-mono text-slate-500">End Session</span>
+            <span className="text-[10px] font-mono text-slate-400 group-hover:text-rose-200">
+              Exit →
+            </span>
           </button>
         </div>
       </div>
