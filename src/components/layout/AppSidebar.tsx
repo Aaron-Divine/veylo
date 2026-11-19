@@ -14,25 +14,30 @@ import {
   Film,
   Building2,
   CheckCircle2,
-  ExternalLink,
   ChevronRight,
   Shield,
 } from "lucide-react";
 import { VeyloLogo } from "@/components/brand/VeyloLogo";
-import { MOCK_USER } from "@/data/mockData";
+import { useAccount } from "@/context/AccountContext";
 
 export const AppSidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({
   isOpen = false,
   onClose,
 }) => {
   const pathname = usePathname();
+  const { currentUser, userSubscriptions } = useAccount();
 
   const mainNavItems = [
     { label: "Dashboard", href: "/app", icon: LayoutDashboard },
     { label: "Send to Bank / Veylo", href: "/app/send", icon: Send },
     { label: "International Transfer", href: "/app/send/international", icon: Globe2 },
     { label: "Account & Identity", href: "/app/account", icon: UserCheck },
-    { label: "Subscriptions", href: "/app/subscriptions", icon: Repeat, badge: "4 Active" },
+    {
+      label: "Subscriptions",
+      href: "/app/subscriptions",
+      icon: Repeat,
+      badge: `${userSubscriptions.filter((s) => s.status === "active").length} Active`,
+    },
     { label: "Budgets & Limits", href: "/app/budgets", icon: PieChart },
     { label: "Activity & History", href: "/app/activity", icon: Clock },
   ];
@@ -55,13 +60,13 @@ export const AppSidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
           </span>
         </div>
 
-        {/* User Card */}
+        {/* User Card (Dynamic based on selected persona) */}
         <div className="rounded-xl bg-midnight-900/90 border border-midnight-800 p-3 flex items-center gap-3">
           <div className="relative">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={MOCK_USER.avatarUrl}
-              alt={MOCK_USER.name}
+              src={currentUser.avatarUrl}
+              alt={currentUser.name}
               className="w-10 h-10 rounded-full object-cover ring-2 ring-electric-cobalt/40"
             />
             <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-acid-lime rounded-full border-2 border-midnight-900 flex items-center justify-center">
@@ -70,10 +75,10 @@ export const AppSidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
-              <p className="text-xs font-bold text-white truncate">{MOCK_USER.name}</p>
+              <p className="text-xs font-bold text-white truncate">{currentUser.name}</p>
             </div>
             <p className="text-[11px] font-mono text-acid-lime tracking-wide truncate">
-              {MOCK_USER.veyloAccountNumber}
+              {currentUser.veyloAccountNumber}
             </p>
           </div>
         </div>
@@ -81,7 +86,7 @@ export const AppSidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
         {/* Main Navigation */}
         <div className="space-y-1">
           <div className="px-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-            Finance & Controls
+            Finance &amp; Controls
           </div>
           {mainNavItems.map((item) => {
             const isActive = pathname === item.href;
@@ -160,12 +165,11 @@ export const AppSidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
             </span>
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           </div>
-          <div className="text-xs font-bold text-white flex items-center gap-1.5">
-            <span>GTBank</span>
-            <span className="text-slate-400 font-normal">••6789</span>
+          <div className="text-xs font-bold text-white flex items-center gap-1.5 truncate">
+            <span>{currentUser.connectedBank.bankName}</span>
           </div>
           <div className="text-[11px] text-slate-400 truncate">
-            {MOCK_USER.connectedBank.accountHolder}
+            {currentUser.connectedBank.accountNumber} ({currentUser.connectedBank.accountHolder})
           </div>
           <div className="pt-1 flex items-center justify-between text-[10px] text-electric-cobalt font-medium">
             <span>Direct Open Payments Link</span>
@@ -178,12 +182,10 @@ export const AppSidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
 
   return (
     <>
-      {/* Desktop static sidebar */}
       <aside className="hidden lg:flex shrink-0 h-screen sticky top-0">
         {sidebarContent}
       </aside>
 
-      {/* Mobile drawer backdrop */}
       {isOpen && (
         <div
           className="fixed inset-0 z-40 bg-midnight-950/80 backdrop-blur-sm lg:hidden"
@@ -191,7 +193,6 @@ export const AppSidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
         />
       )}
 
-      {/* Mobile drawer sidebar */}
       <div
         className={`fixed inset-y-0 left-0 z-50 transform transition-transform duration-200 ease-in-out lg:hidden ${
           isOpen ? "translate-x-0" : "-translate-x-full"

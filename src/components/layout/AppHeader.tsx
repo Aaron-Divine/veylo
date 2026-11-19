@@ -1,9 +1,10 @@
 "use client";
 
 import React from "react";
-import { Menu, Bell, ShieldCheck, QrCode } from "lucide-react";
-import { MOCK_USER } from "@/data/mockData";
+import { Menu, QrCode } from "lucide-react";
+import { useAccount } from "@/context/AccountContext";
 import { Button } from "@/components/ui/Button";
+import { AccountSwitcher } from "./AccountSwitcher";
 
 interface AppHeaderProps {
   title: string;
@@ -18,8 +19,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onOpenMobileMenu,
   onOpenQrModal,
 }) => {
+  const { currentUser, testnetStatus } = useAccount();
+
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200/80 bg-white/95 px-4 md:px-8 backdrop-blur-md">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-[#E2E8F0] bg-white/95 px-4 md:px-8 backdrop-blur-md">
       {/* Left title and hamburger */}
       <div className="flex items-center gap-3">
         <button
@@ -30,7 +33,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <Menu className="w-5 h-5" />
         </button>
         <div>
-          <h1 className="text-lg md:text-xl font-bold text-midnight-950 font-sans tracking-tight">
+          <h1 className="text-lg md:text-xl font-bold text-[#111B32] font-sans tracking-tight">
             {title}
           </h1>
           {subtitle && (
@@ -46,37 +49,23 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             variant="outline"
             size="sm"
             onClick={onOpenQrModal}
-            leftIcon={<QrCode className="w-3.5 h-3.5 text-midnight-900" />}
+            leftIcon={<QrCode className="w-3.5 h-3.5 text-[#111B32]" />}
             className="hidden sm:inline-flex"
           >
             My QR
           </Button>
         )}
 
-        {/* Network status pill */}
-        <div className="hidden md:flex items-center gap-2 bg-slate-100/90 border border-slate-200/80 rounded-full px-3 py-1">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+        {/* Live Interledger Testnet Status Pill */}
+        <div className="hidden lg:flex items-center gap-2 bg-[#F1F5F9] border border-[#E2E8F0] rounded-full px-3 py-1">
+          <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
           <span className="text-[11px] font-mono font-medium text-slate-700">
-            Open Payments • Live
+            ILP Testnet • {testnetStatus.latencyMs}ms
           </span>
         </div>
 
-        {/* Account balance quick display */}
-        <div className="hidden lg:flex flex-col text-right pr-2">
-          <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
-            Available Funds
-          </span>
-          <span className="text-xs font-bold text-midnight-950 font-mono">
-            ₦{(MOCK_USER.availableBalanceNgn).toLocaleString("en-NG", { minimumFractionDigits: 2 })}
-          </span>
-        </div>
-
-        {/* Verified User Badge */}
-        <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
-          <div className="w-8 h-8 rounded-full bg-electric-cobalt/10 text-electric-cobalt flex items-center justify-center font-bold text-xs ring-1 ring-electric-cobalt/30">
-            TA
-          </div>
-        </div>
+        {/* Dynamic Demo Persona Switcher (5 Accounts) */}
+        <AccountSwitcher />
       </div>
     </header>
   );

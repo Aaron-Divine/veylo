@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Manrope, Instrument_Serif } from "next/font/google";
 import "@/styles/tokens.css";
 import "@/styles/globals.css";
+import { RootProviders } from "@/components/providers/RootProviders";
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -43,12 +44,11 @@ export default function RootLayout({
       lang="en"
       className={`${manrope.variable} ${instrumentSerif.variable}`}
       style={{
-        // Define both variable names to ensure 100% font rendering fidelity
         ["--font-instrument-serif" as any]: "var(--font-instrument)",
       }}
     >
       <body className="min-h-screen bg-[#F8FAFC] text-[#111B32] font-sans antialiased selection:bg-[#3D5BFF] selection:text-white">
-        {children}
+        <RootProviders>{children}</RootProviders>
       </body>
     </html>
   );

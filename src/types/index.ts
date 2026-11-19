@@ -5,18 +5,27 @@ export interface UserProfile {
   name: string;
   email: string;
   handle: string;
+  role: "consumer" | "business" | "international";
   veyloAccountNumber: string;
   isVerified: boolean;
   avatarUrl?: string;
+  location: string;
+  openPaymentsAddress: string; // e.g. "https://ilp.interledger-test.dev/tomiade"
   connectedBank: {
     bankName: string;
     accountNumber: string;
     accountHolder: string;
+    currency: string;
     status: "connected" | "pending" | "disconnected";
   };
   totalBalanceNgn: number;
   availableBalanceNgn: number;
   currency: string;
+  foreignBalance?: {
+    amount: number;
+    currency: string;
+  };
+  bio?: string;
 }
 
 export interface Bank {
@@ -36,6 +45,7 @@ export interface BeneficiaryResolution {
   isVerified: boolean;
   destinationType: PaymentDestinationType;
   resolutionTimeMs?: number;
+  openPaymentsAddress?: string;
 }
 
 export interface InterledgerQuote {
@@ -46,19 +56,20 @@ export interface InterledgerQuote {
   veyloFeeNgn: number; // 2.0%
   partnerRailFeeNgn: number;
   networkType: "direct_ilp" | "local_clearing_partner";
-  routePath: string[]; // ["Veylo Sender", "Interledger Connector (FX)", "Barclays Direct ILP"]
-  estimatedDelivery: string; // e.g. "Instant (~3.8s)"
+  routePath: string[];
+  estimatedDelivery: string;
   quoteExpiresInSec: number;
 }
 
 export interface Transaction {
   id: string;
+  userId: string; // Which account this transaction belongs to
   title: string;
   destinationType: PaymentDestinationType;
   recipientName: string;
   recipientIdentifier: string; // Veylo ID, Acct Number, Sort Code + Acct
   destinationBankOrProvider: string;
-  sourceFunding: string; // "Connected Bank Account: GTBank ••6789"
+  sourceFunding: string;
   amountNgn: number;
   destinationAmount?: number;
   destinationCurrency?: string;
@@ -72,9 +83,10 @@ export interface Transaction {
 
 export interface SubscriptionMandate {
   id: string;
+  userId: string;
   merchantName: string;
   merchantLogo?: string;
-  mandateReference: string; // e.g. "#OP-MND-9810"
+  mandateReference: string;
   planName: string;
   amountNgn: number;
   foreignAmount?: number;
@@ -102,4 +114,13 @@ export interface BudgetOverview {
   remainingNgn: number;
   daysRemainingInMonth: number;
   categories: BudgetCategory[];
+}
+
+export interface InterledgerNetworkStatus {
+  endpoint: string;
+  connected: boolean;
+  latencyMs: number;
+  activeConnectors: number;
+  testnetEnv: "https://wallet.interledger-test.dev";
+  lastPing: string;
 }
