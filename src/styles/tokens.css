@@ -1,0 +1,62 @@
+:root {
+  /* Brand Core Palette - Exact Figma Master Tokens */
+  --color-midnight-ink: #111B32;
+  --color-midnight-dark: #0B1222;
+  --color-midnight-surface: #182440;
+  --color-midnight-card: #1E2C4E;
+  --color-midnight-border: #26365E;
+
+  --color-electric-cobalt: #3D5BFF;
+  --color-electric-hover: #2E49E6;
+  --color-electric-light: #EEF2FF;
+  --color-electric-border: #C7D2FE;
+
+  --color-acid-lime: #D8F15B;
+  --color-lime-hover: #C5DE48;
+  --color-lime-light: #F7FEE7;
+
+  /* Neutrals (Slate Ramp) */
+  --color-slate-50: #F8FAFC;
+  --color-slate-100: #F1F5F9;
+  --color-slate-200: #E2E8F0;
+  --color-slate-300: #CBD5E1;
+  --color-slate-400: #94A3B8;
+  --color-slate-500: #64748B;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1E293B;
+  --color-slate-900: #0F172A;
+  --color-white: #FFFFFF;
+
+  /* Semantic Feedback */
+  --color-green-emerald: #10B981;
+  --color-green-light: #ECFDF5;
+  --color-green-border: #A7F3D0;
+
+  --color-amber-alert: #D97706;
+  --color-amber-light: #FEF3C7;
+  --color-amber-border: #FDE68A;
+
+  --color-red-danger: #DC2626;
+  --color-red-light: #FEF2F2;
+  --color-red-border: #FECACA;
+
+  /* Radii */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-card: 14px;
+  --radius-card-lg: 20px;
+  --radius-card-xl: 24px;
+  --radius-full: 9999px;
+}
+
+/* Figma Font Helper Utility Classes */
+.font-instrument {
+  font-family: var(--font-instrument), "Instrument Serif", Georgia, serif !important;
+}
+
+.font-manrope {
+  font-family: var(--font-manrope), "Manrope", sans-serif !important;
+}
