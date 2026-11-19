@@ -34,7 +34,7 @@ export default function BudgetsPage() {
       case "Laptop":
         return <Laptop className="w-4 h-4 text-midnight-950" />;
       case "Repeat":
-        return <Repeat className="w-4 h-4 text-acid-lime" />;
+        return <Repeat className="w-4 h-4 text-electric-cobalt" />;
       case "Utensils":
         return <Utensils className="w-4 h-4 text-amber-500" />;
       case "Zap":

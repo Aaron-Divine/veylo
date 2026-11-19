@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { useAccount } from "@/context/AccountContext";
-import { Check, ChevronDown, User, RefreshCw, Globe2, Building2, Zap, ShieldCheck } from "lucide-react";
+import { Check, ChevronDown, User, RefreshCw, Globe2, Building2, Zap, ShieldCheck, LogOut } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 
 export const AccountSwitcher: React.FC = () => {
@@ -142,6 +142,20 @@ export const AccountSwitcher: React.FC = () => {
               Connected: wallet.interledger-test.dev
             </span>
             <span>{testnetStatus.latencyMs}ms</span>
+          </div>
+
+          {/* Sign Out Action */}
+          <div className="pt-2 border-t border-slate-100">
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                window.location.href = "/auth/login";
+              }}
+              className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition-colors"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Sign Out of Veylo</span>
+            </button>
           </div>
         </div>
       )}

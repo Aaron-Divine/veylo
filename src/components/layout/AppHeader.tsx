@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Menu, QrCode } from "lucide-react";
+import { Menu, QrCode, LogOut } from "lucide-react";
 import { useAccount } from "@/context/AccountContext";
 import { Button } from "@/components/ui/Button";
 import { AccountSwitcher } from "./AccountSwitcher";
@@ -66,6 +66,19 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
         {/* Dynamic Demo Persona Switcher (5 Accounts) */}
         <AccountSwitcher />
+
+        {/* Sign Out Button */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            window.location.href = "/auth/login";
+          }}
+          leftIcon={<LogOut className="w-3.5 h-3.5 text-slate-500" />}
+          className="hidden sm:inline-flex text-slate-700 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50"
+        >
+          Sign Out
+        </Button>
       </div>
     </header>
   );

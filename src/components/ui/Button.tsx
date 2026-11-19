@@ -1,8 +1,17 @@
 import React from "react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "lime" | "outline" | "ghost" | "danger";
+  variant?:
+    | "primary"
+    | "secondary"
+    | "lime"
+    | "outline"
+    | "outline-dark"
+    | "ghost"
+    | "ghost-dark"
+    | "danger";
   size?: "sm" | "md" | "lg" | "xl";
   href?: string;
   isLoading?: boolean;
@@ -38,19 +47,30 @@ export const Button: React.FC<ButtonProps> = ({
       "bg-electric-cobalt text-white hover:bg-electric-hover focus-visible:ring-electric-cobalt shadow-sm hover:shadow-md",
     // 60% Midnight Ink
     secondary:
-      "bg-midnight-900 text-white hover:bg-midnight-800 focus-visible:ring-midnight-700 shadow-sm",
+      "bg-midnight-900 text-white hover:bg-midnight-800 focus-visible:ring-midnight-700 shadow-sm border border-midnight-800",
     // 10% Acid Lime Accent
     lime:
       "bg-acid-lime text-midnight-950 hover:bg-acid-hover focus-visible:ring-acid-lime font-bold shadow-sm",
+    // Light outline
     outline:
       "border border-slate-200 bg-white text-slate-800 hover:bg-slate-50 hover:border-slate-300 focus-visible:ring-slate-400",
+    // Dark surface outline (for midnight cards & hero)
+    "outline-dark":
+      "border border-white/20 bg-white/5 text-white hover:bg-white/10 hover:border-white/30 focus-visible:ring-white/40 shadow-sm",
     ghost:
       "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 focus-visible:ring-slate-400",
+    "ghost-dark":
+      "text-slate-300 hover:text-white hover:bg-white/10 focus-visible:ring-white/40",
     danger:
       "bg-rose-600 text-white hover:bg-rose-700 focus-visible:ring-rose-500 shadow-sm",
   };
 
-  const combinedStyles = `${baseStyles} ${sizeStyles[size]} ${variantStyles[variant]} ${className}`;
+  const combinedStyles = cn(
+    baseStyles,
+    sizeStyles[size],
+    variantStyles[variant],
+    className
+  );
 
   if (href) {
     return (

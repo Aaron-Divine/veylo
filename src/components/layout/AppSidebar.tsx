@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Shield,
+  LogOut,
 } from "lucide-react";
 import { VeyloLogo } from "@/components/brand/VeyloLogo";
 import { useAccount } from "@/context/AccountContext";
@@ -175,6 +176,23 @@ export const AppSidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
             <span>Direct Open Payments Link</span>
             <CheckCircle2 className="w-3 h-3 text-emerald-400" />
           </div>
+        </div>
+
+        {/* Sign Out Action */}
+        <div className="pt-2">
+          <button
+            onClick={() => {
+              if (onClose) onClose();
+              window.location.href = "/auth/login";
+            }}
+            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all"
+          >
+            <div className="flex items-center gap-2.5">
+              <LogOut className="w-4 h-4 text-rose-400" />
+              <span>Sign Out</span>
+            </div>
+            <span className="text-[10px] font-mono text-slate-500">End Session</span>
+          </button>
         </div>
       </div>
     </div>

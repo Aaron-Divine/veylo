@@ -2,6 +2,7 @@
 
 import React, { useEffect } from "react";
 import { X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ModalProps {
   isOpen: boolean;
@@ -54,7 +55,10 @@ export const Modal: React.FC<ModalProps> = ({
 
       {/* Modal Dialog Content */}
       <div
-        className={`relative w-full ${maxWidthStyles[maxWidth]} rounded-3xl bg-white p-6 shadow-2xl border border-slate-100 transition-all z-10`}
+        className={cn(
+          "relative w-full rounded-3xl bg-white p-6 shadow-2xl border border-slate-100 transition-all z-10",
+          maxWidthStyles[maxWidth]
+        )}
       >
         <div className="flex items-start justify-between mb-5">
           <div>

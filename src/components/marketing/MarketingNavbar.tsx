@@ -9,12 +9,11 @@ export const MarketingNavbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { label: "Why 10 Digits", href: "/#why-10-digits" },
+    { label: "Personal", href: "/app" },
+    { label: "Business", href: "/business" },
     { label: "How It Works", href: "/#how-it-works" },
-    { label: "Veylo Business", href: "/business" },
-    { label: "ReelRoom Demo", href: "/demo/reelroom" },
-    { label: "Security & ILP", href: "/demo/checkout-architecture" },
-    { label: "Developers", href: "/demo/checkout-architecture" },
+    { label: "Security", href: "/demo/checkout-architecture" },
+    { label: "About", href: "/#about" },
   ];
 
   return (
@@ -63,7 +62,7 @@ export const MarketingNavbar: React.FC = () => {
             href="/auth/register"
             className="inline-flex items-center justify-center px-4 py-2.5 rounded-[10px] bg-[#3D5BFF] hover:bg-[#2E49E6] text-white font-bold text-[13px] shadow-sm transition-all active:scale-[0.98]"
           >
-            Get Veylo Account →
+            Open Account
           </Link>
         </div>
 
@@ -103,7 +102,7 @@ export const MarketingNavbar: React.FC = () => {
               href="/auth/register"
               className="py-2.5 text-center text-sm font-bold text-white bg-[#3D5BFF] rounded-xl"
             >
-              Get Veylo Account →
+              Open Account
             </Link>
           </div>
         </div>

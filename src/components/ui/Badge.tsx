@@ -1,4 +1,5 @@
 import React from "react";
+import { cn } from "@/lib/utils";
 
 interface BadgeProps {
   children: React.ReactNode;
@@ -42,10 +43,15 @@ export const Badge: React.FC<BadgeProps> = ({
 
   return (
     <span
-      className={`inline-flex items-center rounded-full font-mono uppercase tracking-wider ${sizeStyles[size]} ${variantStyles[variant]} ${className}`}
+      className={cn(
+        "inline-flex items-center rounded-full font-mono uppercase tracking-wider",
+        sizeStyles[size],
+        variantStyles[variant],
+        className
+      )}
     >
       {dot && (
-        <span className={`w-1.5 h-1.5 rounded-full ${dotStyles[variant]} shrink-0`} />
+        <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", dotStyles[variant])} />
       )}
       <span>{children}</span>
     </span>

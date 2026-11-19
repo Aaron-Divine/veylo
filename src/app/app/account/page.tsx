@@ -20,6 +20,7 @@ import {
   ExternalLink,
   RefreshCw,
   Search,
+  LogOut,
 } from "lucide-react";
 
 export default function AccountIdentityPage() {
@@ -274,6 +275,30 @@ export default function AccountIdentityPage() {
                 </div>
               </div>
             )}
+          </div>
+        </Card>
+
+        {/* Session & Security */}
+        <Card variant="white" className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-base font-bold text-midnight-950 font-sans">
+                Active Session & Security
+              </h2>
+              <p className="text-xs text-slate-500">
+                You are currently authenticated as <strong className="text-midnight-900">{currentUser.name}</strong> ({currentUser.veyloAccountNumber})
+              </p>
+            </div>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => {
+                window.location.href = "/auth/login";
+              }}
+              leftIcon={<LogOut className="w-3.5 h-3.5" />}
+            >
+              Sign Out of Veylo
+            </Button>
           </div>
         </Card>
       </div>

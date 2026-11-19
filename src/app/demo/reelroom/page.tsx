@@ -72,9 +72,8 @@ export default function ReelroomDemoPage() {
             </span>
             <Button
               href="/app"
-              variant="outline"
+              variant="outline-dark"
               size="sm"
-              className="border-slate-800 bg-slate-900 text-slate-200 hover:bg-slate-800"
             >
               Back to Veylo Portal
             </Button>

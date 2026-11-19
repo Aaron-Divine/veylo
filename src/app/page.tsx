@@ -178,17 +178,17 @@ export default function MarketingHomePage() {
                   <button
                     onClick={handleAuthorizeTransfer}
                     disabled={transferred || isProcessing}
-                    className="w-full h-[52px] rounded-[14px] bg-[#3D5BFF] hover:bg-[#2E49E6] text-white font-bold text-[15px] flex items-center justify-center transition-all active:scale-[0.98] disabled:bg-emerald-600"
+                    className="w-full h-[52px] rounded-[14px] bg-[#D8F15B] hover:bg-[#C5DE48] text-[#111B32] font-bold text-[15px] flex items-center justify-center transition-all active:scale-[0.98] disabled:bg-[#10B981] disabled:text-white shadow-sm"
                   >
                     {isProcessing ? (
-                      <span className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+                      <span className="animate-spin w-5 h-5 border-2 border-[#111B32] border-t-transparent rounded-full" />
                     ) : transferred ? (
-                      <span className="flex items-center gap-2">
+                      <span className="flex items-center gap-2 font-bold text-white">
                         <Check className="w-5 h-5 text-white stroke-[3]" />
                         Transfer Settled via Interledger (340ms)
                       </span>
                     ) : (
-                      "Authorize Instant Transfer with Face ID"
+                      "Authorize with Passkey / Face ID"
                     )}
                   </button>
                 </div>

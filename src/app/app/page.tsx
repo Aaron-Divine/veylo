@@ -142,9 +142,8 @@ export default function AppDashboardPage() {
               </Button>
               <Button
                 href="/app/subscriptions"
-                variant="outline"
+                variant="outline-dark"
                 size="md"
-                className="bg-midnight-900 border-midnight-800 text-white hover:bg-midnight-800"
                 leftIcon={<Repeat className="w-4 h-4 text-acid-lime" />}
               >
                 Subscriptions ({activeSubsCount})
@@ -194,7 +193,7 @@ export default function AppDashboardPage() {
           <Card variant="white" className="space-y-3">
             <div className="flex items-center justify-between text-xs font-mono text-slate-500 uppercase">
               <span>Active Subscriptions</span>
-              <Repeat className="w-4 h-4 text-acid-lime" />
+              <Repeat className="w-4 h-4 text-electric-cobalt" />
             </div>
             <div className="text-2xl sm:text-3xl font-black font-mono text-midnight-950">
               {activeSubsCount} Mandates

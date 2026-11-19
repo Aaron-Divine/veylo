@@ -155,7 +155,7 @@ export default function SendMoneyPage() {
                 : "text-slate-600 hover:text-midnight-950"
             }`}
           >
-            <UserCheck className="w-4 h-4 text-acid-lime" />
+            <UserCheck className="w-4 h-4 text-electric-cobalt" />
             <span>Veylo Account / ID</span>
           </button>
 

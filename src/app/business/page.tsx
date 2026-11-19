@@ -66,9 +66,8 @@ export default function BusinessMerchantDashboardPage() {
               </Button>
               <Button
                 href="/demo/reelroom"
-                variant="outline"
+                variant="outline-dark"
                 size="md"
-                className="border-midnight-700 bg-midnight-900 text-white hover:bg-midnight-800"
                 rightIcon={<ExternalLink className="w-4 h-4 text-acid-lime" />}
               >
                 Test Consumer Checkout
