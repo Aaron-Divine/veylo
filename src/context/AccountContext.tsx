@@ -102,7 +102,15 @@ export const AccountProvider: React.FC<{ children: React.ReactNode }> = ({ child
       t.userId === currentUserId ||
       (cleanCurrentAcc && (t.sourceFunding?.includes(cleanCurrentAcc) || t.recipientIdentifier?.includes(cleanCurrentAcc)))
   );
-  const userSubscriptions = subscriptions.filter((s) => s.userId === currentUserId);
+  const userSubscriptions = subscriptions.filter(
+    (s) =>
+      s.userId === currentUserId ||
+      (cleanCurrentAcc && (
+        s.userId === `usr_${cleanCurrentAcc}` ||
+        (s as any).accountNumber === cleanCurrentAcc ||
+        s.mandateReference?.includes(cleanCurrentAcc)
+      ))
+  );
 
   /**
    * Executes an atomic transfer:
@@ -276,6 +284,14 @@ export const AccountProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setSubscriptions((prev) =>
       prev.map((s) => (s.id === mandateId ? { ...s, status: "revoked" } : s))
     );
+    // Also notify backend to stop future debits
+    try {
+      fetch('/api/subscriptions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'revoke', mandate_id: mandateId }),
+      }).catch(() => {});
+    } catch {}
   };
 
   const resetAllDemoData = () => {
@@ -367,6 +383,20 @@ export const AccountProvider: React.FC<{ children: React.ReactNode }> = ({ child
             const liveIds = new Set(liveTxns.map((l) => l.id));
             const existingOther = prev.filter((p) => !liveIds.has(p.id));
             return [...liveTxns, ...existingOther];
+          });
+        }
+      }
+
+      // 3. Fetch live subscription mandates
+      const subRes = await fetch(`/api/subscriptions?account_number=${clean}`);
+      if (subRes.ok) {
+        const subData = await subRes.json();
+        if (subData.status === 'success' && Array.isArray(subData.subscriptions)) {
+          setSubscriptions((prev) => {
+            const serverSubs: SubscriptionMandate[] = subData.subscriptions;
+            const serverIds = new Set(serverSubs.map((s) => s.id));
+            const existingOther = prev.filter((p) => !serverIds.has(p.id));
+            return [...serverSubs, ...existingOther];
           });
         }
       }
