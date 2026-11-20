@@ -1,4 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import {
+  saveMandate,
+  getAllMandates,
+  getMandatesByAccount,
+  revokeMandate,
+  StoredMandate,
+} from '@/lib/mandatesStore';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -6,53 +13,15 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
-// Global in-memory mandate store (persists for lifetime of lambda/container)
-export interface StoredMandate {
-  id: string;
-  userId: string;
-  accountNumber: string;
-  merchantName: string;
-  merchantLogo?: string;
-  mandateReference: string;
-  planName: string;
-  amountNgn: number;
-  foreignAmount?: number;
-  foreignCurrency?: string;
-  frequency: 'monthly' | 'yearly' | 'weekly';
-  nextBillingDate: string;
-  category: string;
-  status: 'active' | 'revoked' | 'paused';
-  createdDate: string;
-  paymentProtocol: 'Open Payments Interledger';
-}
-
-declare global {
-  // eslint-disable-next-line no-var
-  var __veylo_mandates_store: Map<string, StoredMandate> | undefined;
-}
-
-if (!global.__veylo_mandates_store) {
-  global.__veylo_mandates_store = new Map<string, StoredMandate>();
-}
-
-const mandatesStore = global.__veylo_mandates_store;
-
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const accountNumber = (searchParams.get('account_number') || '').replace(/\s+/g, '');
 
-    const allMandates = Array.from(mandatesStore.values());
-    const filtered = accountNumber
-      ? allMandates.filter(
-          (m) =>
-            m.accountNumber.replace(/\s+/g, '') === accountNumber ||
-            m.userId.includes(accountNumber)
-        )
-      : allMandates;
+    const mandates = accountNumber ? getMandatesByAccount(accountNumber) : getAllMandates();
 
     return NextResponse.json(
-      { status: 'success', subscriptions: filtered },
+      { status: 'success', subscriptions: mandates },
       { headers: CORS_HEADERS }
     );
   } catch (err) {
@@ -78,17 +47,14 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const existing = mandatesStore.get(mandateId);
-      if (existing) {
-        existing.status = 'revoked';
-        mandatesStore.set(mandateId, existing);
-      }
+      const revoked = revokeMandate(mandateId);
 
       return NextResponse.json(
         {
           status: 'success',
           message: 'Open Payments recurring mandate revoked successfully. Future automatic transfers stopped.',
           mandate_id: mandateId,
+          subscription: revoked,
         },
         { headers: CORS_HEADERS }
       );
@@ -139,7 +105,7 @@ export async function POST(req: NextRequest) {
       paymentProtocol: 'Open Payments Interledger',
     };
 
-    mandatesStore.set(id, mandate);
+    saveMandate(mandate);
 
     return NextResponse.json(
       {

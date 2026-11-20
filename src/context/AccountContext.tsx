@@ -281,15 +281,20 @@ export const AccountProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const revokeMandate = (mandateId: string) => {
+    const sub = subscriptions.find((s) => s.id === mandateId || s.mandateReference === mandateId);
     setSubscriptions((prev) =>
-      prev.map((s) => (s.id === mandateId ? { ...s, status: "revoked" } : s))
+      prev.map((s) => (s.id === mandateId || s.mandateReference === mandateId ? { ...s, status: "revoked" } : s))
     );
     // Also notify backend to stop future debits
     try {
       fetch('/api/subscriptions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'revoke', mandate_id: mandateId }),
+        body: JSON.stringify({
+          action: 'revoke',
+          mandate_id: mandateId,
+          mandate_reference: sub?.mandateReference || mandateId,
+        }),
       }).catch(() => {});
     } catch {}
   };

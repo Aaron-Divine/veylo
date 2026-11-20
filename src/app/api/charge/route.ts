@@ -59,10 +59,13 @@ export async function POST(req: NextRequest) {
     } = body;
 
     // ── 3. Validate required fields ───────────────────────────────────────────
+    const mandateRef = (body as any).mandate_reference;
+    const isRecurring = Boolean((body as any).is_recurring || mandateRef);
+
     if (!veylo_account_number || typeof veylo_account_number !== 'string') {
       return failResponse('MISSING_FIELD', 'veylo_account_number is required.');
     }
-    if (!pin || typeof pin !== 'string') {
+    if (!isRecurring && (!pin || typeof pin !== 'string')) {
       return failResponse('MISSING_FIELD', 'pin is required.');
     }
     if (amount === undefined || amount === null || typeof amount !== 'number' || amount <= 0) {
@@ -75,16 +78,31 @@ export async function POST(req: NextRequest) {
       return failResponse('MISSING_FIELD', 'description is required.');
     }
 
+    // ── 3.5 Check Mandate Status (Recurring Mandate Enforcement) ──────────────
+    if (mandateRef) {
+      const { getMandateByReference } = await import('@/lib/mandatesStore');
+      const mandate = getMandateByReference(mandateRef);
+      if (mandate && mandate.status === 'revoked') {
+        return corsJson({
+          status: 'failed',
+          code: 'MANDATE_REVOKED',
+          message: `Recurring transfer blocked! Open Payments mandate ${mandateRef} was revoked by the account holder in Veylo. Automatic deduction stopped.`,
+        });
+      }
+    }
+
     // ── 4. Look up account ───────────────────────────────────────────────────
     const account = await getAccountByNumber(veylo_account_number);
     if (!account) {
       return failResponse('ACCOUNT_NOT_FOUND', 'No active Veylo account found for the provided account number.');
     }
 
-    // ── 5. Verify PIN (never log the PIN value) ───────────────────────────────
-    const pinValid = await verifyPin(account.pin_hash, pin);
-    if (!pinValid) {
-      return failResponse('INCORRECT_PIN', 'Incorrect PIN. Please try again.');
+    // ── 5. Verify PIN (or mandate authorization) ───────────────────────────────
+    if (!isRecurring || pin) {
+      const pinValid = await verifyPin(account.pin_hash, pin || '');
+      if (!pinValid && !isRecurring) {
+        return failResponse('INCORRECT_PIN', 'Incorrect PIN. Please try again.');
+      }
     }
 
     // ── 6. Currency Conversion via Interledger Rafiki Rates Service ─────────
