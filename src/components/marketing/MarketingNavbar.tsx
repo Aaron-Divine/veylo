@@ -9,11 +9,10 @@ export const MarketingNavbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { label: "Personal", href: "/app" },
-    { label: "Business", href: "/business" },
+    { label: "Wallet Portal", href: "/app" },
+    { label: "Subscriptions", href: "/app/subscriptions" },
     { label: "How It Works", href: "/#how-it-works" },
-    { label: "Security", href: "/demo/checkout-architecture" },
-    { label: "About", href: "/#about" },
+    { label: "Learnify Store", href: "https://learnify-delta-six.vercel.app" },
   ];
 
   return (

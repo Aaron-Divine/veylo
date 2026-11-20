@@ -40,28 +40,28 @@ export const MarketingFooter: React.FC = () => {
             <ul className="space-y-2.5 text-[12px] text-[#CBD5E1]">
               <li>
                 <Link href="/app" className="hover:text-white transition-colors">
-                  Veylo Account Number
+                  Veylo Wallet Pass
                 </Link>
               </li>
               <li>
-                <Link href="/app/send" className="hover:text-white transition-colors">
-                  Veylo Pay
+                <Link href="/app/account" className="hover:text-white transition-colors">
+                  Account &amp; PIN
                 </Link>
               </li>
               <li>
-                <Link href="/business" className="hover:text-white transition-colors">
-                  Veylo Business
+                <Link href="/app/subscriptions" className="hover:text-white transition-colors">
+                  Subscriptions &amp; Mandates
                 </Link>
               </li>
               <li>
-                <Link href="/demo/reelroom" className="hover:text-white transition-colors">
-                  ReelRoom Demo
+                <Link href="/app/activity" className="hover:text-white transition-colors">
+                  Activity Ledger
                 </Link>
               </li>
               <li>
-                <Link href="/app/budgets" className="hover:text-white transition-colors">
-                  Personal Finance
-                </Link>
+                <a href="https://learnify-delta-six.vercel.app" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
+                  Live Merchant (Learnify) ↗
+                </a>
               </li>
             </ul>
           </div>
@@ -73,29 +73,24 @@ export const MarketingFooter: React.FC = () => {
             </h4>
             <ul className="space-y-2.5 text-[12px] text-[#CBD5E1]">
               <li>
-                <Link href="/demo/checkout-architecture" className="hover:text-white transition-colors">
-                  Interledger ILP v4
-                </Link>
+                <a href="https://interledger.org" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
+                  Interledger Protocol (ILP) ↗
+                </a>
               </li>
               <li>
-                <Link href="/demo/checkout-architecture" className="hover:text-white transition-colors">
-                  Open Payments API
-                </Link>
+                <a href="https://openpayments.dev" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
+                  Open Payments Standard ↗
+                </a>
               </li>
               <li>
-                <Link href="/app/send/international" className="hover:text-white transition-colors">
-                  Routing Connectors
-                </Link>
+                <a href="https://github.com/interledger/rafiki" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
+                  Rafiki FX Rates Engine ↗
+                </a>
               </li>
               <li>
-                <span className="cursor-pointer hover:text-white transition-colors">
-                  Liquidity Engines
-                </span>
-              </li>
-              <li>
-                <span className="cursor-pointer hover:text-white transition-colors">
-                  Network Uptime
-                </span>
+                <a href="https://wallet.interledger-test.dev" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
+                  Testnet Dev Wallet ↗
+                </a>
               </li>
             </ul>
           </div>
@@ -103,33 +98,28 @@ export const MarketingFooter: React.FC = () => {
           {/* Developers Column (Figma 51:237) */}
           <div className="space-y-3 text-left">
             <h4 className="text-[11px] font-bold text-[#D8F15B] uppercase tracking-wider font-mono">
-              DEVELOPERS
+              DEVELOPERS &amp; API
             </h4>
             <ul className="space-y-2.5 text-[12px] text-[#CBD5E1]">
               <li>
-                <Link href="/demo/checkout-architecture" className="hover:text-white transition-colors">
-                  Documentation
-                </Link>
-              </li>
-              <li>
-                <Link href="/business/stand" className="hover:text-white transition-colors">
-                  Checkout Widget
-                </Link>
-              </li>
-              <li>
-                <span className="cursor-pointer hover:text-white transition-colors">
-                  Developer Sandbox
+                <span className="font-mono text-[11px] text-[#D8F15B]">
+                  POST /api/charge
                 </span>
               </li>
               <li>
-                <span className="cursor-pointer hover:text-white transition-colors">
-                  GitHub SDKs
+                <span className="font-mono text-[11px] text-slate-300">
+                  GET /api/quotes
                 </span>
               </li>
               <li>
-                <span className="cursor-pointer hover:text-white transition-colors">
-                  Protocol RFCs
+                <span className="font-mono text-[11px] text-slate-300">
+                  POST /api/subscriptions
                 </span>
+              </li>
+              <li>
+                <a href="https://github.com/Aaron-Divine/veylo" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
+                  GitHub Repository ↗
+                </a>
               </li>
             </ul>
           </div>

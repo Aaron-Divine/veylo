@@ -11,8 +11,7 @@ import { VeyloSymbol } from "@/components/brand/VeyloLogo";
 import {
   Copy,
   Check,
-  Send,
-  Globe2,
+  UserCheck,
   Repeat,
   ShieldCheck,
   ArrowUpRight,
@@ -20,7 +19,8 @@ import {
   ChevronRight,
   Building2,
   CheckCircle2,
-  PieChart,
+  Clock,
+  ExternalLink,
 } from "lucide-react";
 
 export default function AppDashboardPage() {
@@ -125,29 +125,38 @@ export default function AppDashboardPage() {
             {/* Quick Action Buttons */}
             <div className="pt-4 border-t border-midnight-900 flex flex-wrap gap-3">
               <Button
-                href="/app/send"
+                href="/app/subscriptions"
                 variant="lime"
                 size="md"
-                leftIcon={<Send className="w-4 h-4" />}
+                leftIcon={<Repeat className="w-4 h-4" />}
               >
-                Send to Bank / Veylo
+                Subscriptions &amp; Mandates ({activeSubsCount})
               </Button>
               <Button
-                href="/app/send/international"
+                href="/app/account"
                 variant="primary"
                 size="md"
-                leftIcon={<Globe2 className="w-4 h-4" />}
+                leftIcon={<UserCheck className="w-4 h-4" />}
               >
-                International Transfer
+                Account &amp; Security PIN
               </Button>
               <Button
-                href="/app/subscriptions"
+                href="/app/activity"
                 variant="outline-dark"
                 size="md"
-                leftIcon={<Repeat className="w-4 h-4 text-acid-lime" />}
+                leftIcon={<Clock className="w-4 h-4 text-acid-lime" />}
               >
-                Subscriptions ({activeSubsCount})
+                Activity Ledger
               </Button>
+              <a
+                href="https://learnify-delta-six.vercel.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white bg-midnight-900 hover:bg-midnight-800 border border-midnight-700 transition-colors"
+              >
+                <span>Test on Learnify</span>
+                <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+              </a>
             </div>
           </div>
         </div>

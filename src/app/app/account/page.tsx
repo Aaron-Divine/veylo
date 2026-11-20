@@ -21,6 +21,9 @@ import {
   RefreshCw,
   Search,
   LogOut,
+  KeyRound,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 export default function AccountIdentityPage() {
@@ -28,6 +31,7 @@ export default function AccountIdentityPage() {
   const [copiedId, setCopiedId] = useState(false);
   const [copiedPointer, setCopiedPointer] = useState(false);
   const [isFrozen, setIsFrozen] = useState(false);
+  const [showPin, setShowPin] = useState(false);
 
   // Live testnet address tester
   const [testAddressInput, setTestAddressInput] = useState("https://ilp.interledger-test.dev/tomiade");
@@ -163,6 +167,30 @@ export default function AccountIdentityPage() {
                     leftIcon={copiedPointer ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                   >
                     {copiedPointer ? "Copied" : "Copy"}
+                  </Button>
+                </div>
+
+                {/* 4-Digit Secret PIN for Online Merchants */}
+                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-mono uppercase font-bold text-amber-600 flex items-center gap-1">
+                      <KeyRound className="w-3 h-3" />
+                      In-App Merchant Authorization PIN
+                    </span>
+                    <p className="text-base font-black font-mono text-midnight-950 tracking-widest mt-0.5">
+                      {showPin ? "1234" : "••••"}
+                    </p>
+                    <span className="text-[10px] text-slate-500">
+                      Used on Learnify and partner stores to authorize wallet debits
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowPin(!showPin)}
+                    leftIcon={showPin ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  >
+                    {showPin ? "Hide" : "Show PIN"}
                   </Button>
                 </div>
               </div>

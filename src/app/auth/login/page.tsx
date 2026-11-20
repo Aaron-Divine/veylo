@@ -323,9 +323,14 @@ export default function LoginPage() {
           <Link href="/auth/register" className="hover:text-slate-600 transition-colors">
             Register Account
           </Link>
-          <Link href="/business" className="hover:text-slate-600 transition-colors">
-            Merchant Portal
-          </Link>
+          <a
+            href="https://learnify-delta-six.vercel.app"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-slate-600 transition-colors"
+          >
+            Partner Store (Learnify) ↗
+          </a>
         </div>
       </footer>
     </div>

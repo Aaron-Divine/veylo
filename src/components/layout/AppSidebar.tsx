@@ -5,17 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  Send,
-  Globe2,
   UserCheck,
   Repeat,
-  PieChart,
   Clock,
-  Film,
-  Building2,
   CheckCircle2,
-  ChevronRight,
-  Shield,
   LogOut,
 } from "lucide-react";
 import { VeyloLogo } from "@/components/brand/VeyloLogo";
@@ -30,8 +23,6 @@ export const AppSidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
 
   const mainNavItems = [
     { label: "Dashboard", href: "/app", icon: LayoutDashboard },
-    { label: "Send to Bank / Veylo", href: "/app/send", icon: Send },
-    { label: "International Transfer", href: "/app/send/international", icon: Globe2 },
     { label: "Account & Identity", href: "/app/account", icon: UserCheck },
     {
       label: "Subscriptions",
@@ -39,14 +30,7 @@ export const AppSidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
       icon: Repeat,
       badge: `${userSubscriptions.filter((s) => s.status === "active").length} Active`,
     },
-    { label: "Budgets & Limits", href: "/app/budgets", icon: PieChart },
     { label: "Activity & History", href: "/app/activity", icon: Clock },
-  ];
-
-  const demoNavItems = [
-    { label: "Reelroom Checkout", href: "/demo/reelroom", icon: Film },
-    { label: "Checkout Architecture", href: "/demo/checkout-architecture", icon: Shield },
-    { label: "Veylo Business Portal", href: "/business", icon: Building2 },
   ];
 
   const sidebarContent = (
@@ -127,34 +111,6 @@ export const AppSidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
           })}
         </div>
 
-        {/* Demo Section */}
-        <div className="space-y-1 pt-2 border-t border-midnight-900">
-          <div className="px-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-            Interledger Demos
-          </div>
-          {demoNavItems.map((item) => {
-            const isActive = pathname === item.href;
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onClose}
-                className={`group flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all ${
-                  isActive
-                    ? "bg-midnight-800 text-white font-semibold"
-                    : "text-slate-400 hover:text-white hover:bg-midnight-900/60"
-                }`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Icon className="w-3.5 h-3.5 text-slate-400 group-hover:text-electric-cobalt" />
-                  <span>{item.label}</span>
-                </div>
-                <ChevronRight className="w-3 h-3 text-slate-400 group-hover:text-white transition-transform group-hover:translate-x-0.5" />
-              </Link>
-            );
-          })}
-        </div>
       </div>
 
       {/* Bottom Section: Connected Funding Bank Card */}
