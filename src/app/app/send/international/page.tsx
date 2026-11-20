@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
-import { UK_BANKS, EU_BANKS, MOCK_USER } from "@/data/mockData";
+import { UK_BANKS, EU_BANKS } from "@/data/mockData";
+import { useAccount } from "@/context/AccountContext";
 import {
   Globe2,
   Building2,
@@ -25,20 +26,23 @@ import {
 } from "lucide-react";
 
 export default function InternationalTransferPage() {
+  const { currentUser, allUsers, sendPayment } = useAccount();
+
   const [destinationCountry, setDestinationCountry] = useState<"GB" | "EU" | "UNSUPPORTED">("GB");
   const [sortCode, setSortCode] = useState("40-22-18");
   const [accountNumber, setAccountNumber] = useState("88291044");
+  const [iban, setIban] = useState("DE89 1004 0000 0123 4567 89");
   const [resolvedRecipient, setResolvedRecipient] = useState<string | null>("Arthur Pendelton");
-  const [gbpAmount, setGbpAmount] = useState("150.00");
+  const [fxAmount, setFxAmount] = useState("150.00");
 
   // Routing Mode: Direct Interledger Bank Endpoint vs Local Payout Partner
   const [routeMode, setRouteMode] = useState<"direct_ilp" | "payout_partner">("direct_ilp");
 
   // Live Quote & Timer
   const [quoteSecondsLeft, setQuoteSecondsLeft] = useState(58);
-  const fxRate = 2040.0; // 1 GBP = 2040 NGN
-  const parsedGbp = parseFloat(gbpAmount) || 0;
-  const ngnEquivalent = parsedGbp * fxRate;
+  const fxRate = destinationCountry === "GB" ? 2040.0 : 2200.0;
+  const parsedFx = parseFloat(fxAmount) || 0;
+  const ngnEquivalent = parsedFx * fxRate;
   const veyloFeeNgn = ngnEquivalent * 0.02; // 2.0%
   const totalDebitNgn = ngnEquivalent + veyloFeeNgn;
 
@@ -46,6 +50,11 @@ export default function InternationalTransferPage() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [isAuthorizing, setIsAuthorizing] = useState(false);
   const [transferSettled, setTransferSettled] = useState(false);
+  const [transferResult, setTransferResult] = useState<{
+    reference: string;
+    packetId: string;
+    recipient: string;
+  } | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -58,8 +67,11 @@ export default function InternationalTransferPage() {
     setDestinationCountry(country);
     if (country === "GB") {
       setResolvedRecipient("Arthur Pendelton");
+      setSortCode("40-22-18");
+      setAccountNumber("88291044");
     } else if (country === "EU") {
-      setResolvedRecipient("Helena Schmidt (DE89 3704 0044 0532 0130 00)");
+      setResolvedRecipient("Kafé Artisan Berlin");
+      setIban("DE89 1004 0000 0123 4567 89");
     } else {
       setResolvedRecipient(null);
     }
@@ -69,13 +81,48 @@ export default function InternationalTransferPage() {
     setIsAuthorizing(true);
     setTimeout(() => {
       setIsAuthorizing(false);
+
+      const destinationCurrency = destinationCountry === "GB" ? "GBP" : "EUR";
+      const bankOrProvider =
+        destinationCountry === "GB"
+          ? routeMode === "direct_ilp"
+            ? "Barclays Direct ILP Endpoint"
+            : "UK Faster Payments Partner (ClearBank)"
+          : routeMode === "direct_ilp"
+          ? "SEPA Direct Interledger Endpoint"
+          : "Eurozone Clearing Partner";
+
+      const recipientIdentifier =
+        destinationCountry === "GB"
+          ? `Sort ${sortCode} • Acct ${accountNumber}`
+          : iban;
+
+      const recipientName = resolvedRecipient || "International Beneficiary";
+
+      const res = sendPayment({
+        recipientIdentifier,
+        recipientName,
+        amountNgn: ngnEquivalent,
+        destinationType: "international_bank",
+        destinationBankOrProvider: bankOrProvider,
+        destinationAmount: parsedFx,
+        destinationCurrency,
+      });
+
+      setTransferResult({
+        reference: res.reference,
+        packetId: res.packetId,
+        recipient: recipientName,
+      });
+
       setTransferSettled(true);
-    }, 1100);
+    }, 1000);
   };
 
   const handleReset = () => {
     setAuthModalOpen(false);
     setTransferSettled(false);
+    setTransferResult(null);
   };
 
   return (
@@ -159,6 +206,56 @@ export default function InternationalTransferPage() {
                 </button>
               </div>
 
+              {/* Quick Select International Beneficiaries */}
+              {destinationCountry !== "UNSUPPORTED" && (
+                <div className="space-y-2">
+                  <span className="text-[11px] font-mono text-slate-500 uppercase font-semibold">
+                    Quick Select Demo Beneficiary:
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {destinationCountry === "GB" ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setResolvedRecipient("Arthur Pendelton");
+                          setSortCode("40-22-18");
+                          setAccountNumber("88291044");
+                        }}
+                        className="p-2.5 rounded-xl border border-slate-200 text-left hover:border-electric-cobalt hover:bg-electric-cobalt/5 transition-all text-xs"
+                      >
+                        <p className="font-bold text-midnight-950">Arthur Pendelton (London, UK)</p>
+                        <p className="text-[10px] text-slate-500 font-mono">Barclays • 40-22-18 • 88291044</p>
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setResolvedRecipient("Kafé Artisan Berlin");
+                            setIban("DE89 1004 0000 0123 4567 89");
+                          }}
+                          className="p-2.5 rounded-xl border border-slate-200 text-left hover:border-electric-cobalt hover:bg-electric-cobalt/5 transition-all text-xs"
+                        >
+                          <p className="font-bold text-midnight-950">Kafé Artisan Berlin (Merchant)</p>
+                          <p className="text-[10px] text-slate-500 font-mono">Commerzbank • DE89•••4012</p>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setResolvedRecipient("Helena Schmidt");
+                            setIban("DE89 3704 0044 0532 0130 00");
+                          }}
+                          className="p-2.5 rounded-xl border border-slate-200 text-left hover:border-electric-cobalt hover:bg-electric-cobalt/5 transition-all text-xs"
+                        >
+                          <p className="font-bold text-midnight-950">Helena Schmidt (Munich)</p>
+                          <p className="text-[10px] text-slate-500 font-mono">Deutsche Bank • DE89•••3000</p>
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Unsupported corridor fallback state */}
               {destinationCountry === "UNSUPPORTED" ? (
                 <div className="p-6 rounded-2xl bg-amber-50 border border-amber-200 text-center space-y-3">
@@ -226,8 +323,9 @@ export default function InternationalTransferPage() {
                     <div className="space-y-4">
                       <Input
                         label="Beneficiary IBAN"
-                        defaultValue="DE89370400440532013000"
-                        placeholder="DE..."
+                        value={iban}
+                        onChange={(e) => setIban(e.target.value)}
+                        placeholder="DE89..."
                         helperText="European International Bank Account Number"
                       />
                       <Input
@@ -235,6 +333,23 @@ export default function InternationalTransferPage() {
                         defaultValue="DEUTDEDDFXX"
                         placeholder="e.g. DEUT..."
                       />
+                      {resolvedRecipient && (
+                        <div className="p-4 rounded-xl bg-emerald-50/80 border border-emerald-200 space-y-1">
+                          <div className="flex items-center justify-between text-xs font-mono text-emerald-800">
+                            <span className="flex items-center gap-1 font-bold">
+                              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                              SEPA VERIFIED BENEFICIARY
+                            </span>
+                            <span>Direct Interledger Endpoint</span>
+                          </div>
+                          <p className="text-base font-black text-emerald-950 font-sans">
+                            {resolvedRecipient}
+                          </p>
+                          <p className="text-xs text-emerald-700 font-mono">
+                            IBAN: {iban}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -246,14 +361,15 @@ export default function InternationalTransferPage() {
                           ? "Beneficiary Receives (GBP)"
                           : "Beneficiary Receives (EUR)"
                       }
-                      value={gbpAmount}
-                      onChange={(e) => setGbpAmount(e.target.value)}
+                      value={fxAmount}
+                      onChange={(e) => setFxAmount(e.target.value)}
                       placeholder="0.00"
                       leftAddon={
                         <span className="font-bold text-slate-500">
                           {destinationCountry === "GB" ? "£" : "€"}
                         </span>
                       }
+                      helperText={`Sender: ${currentUser.name} (Available: ₦${currentUser.availableBalanceNgn.toLocaleString()})`}
                     />
                   </div>
 
@@ -283,7 +399,7 @@ export default function InternationalTransferPage() {
                           {routeMode === "direct_ilp" && <Check className="w-3.5 h-3.5 text-electric-cobalt" />}
                         </div>
                         <p className="text-[11px] text-slate-500 leading-tight">
-                          Receiving bank (Barclays) participates directly on Interledger.
+                          Receiving bank participates directly on Interledger network.
                         </p>
                       </button>
 
@@ -301,7 +417,7 @@ export default function InternationalTransferPage() {
                           {routeMode === "payout_partner" && <Check className="w-3.5 h-3.5 text-electric-cobalt" />}
                         </div>
                         <p className="text-[11px] text-slate-500 leading-tight">
-                          Integrated financial provider clears to UK Faster Payments.
+                          Integrated financial provider clears to local commercial rails.
                         </p>
                       </button>
                     </div>
@@ -311,7 +427,7 @@ export default function InternationalTransferPage() {
                     variant="primary"
                     size="lg"
                     onClick={() => setAuthModalOpen(true)}
-                    disabled={!resolvedRecipient || parsedGbp <= 0}
+                    disabled={!resolvedRecipient || parsedFx <= 0 || totalDebitNgn > currentUser.availableBalanceNgn}
                     className="w-full justify-center"
                     rightIcon={<ArrowRight className="w-5 h-5" />}
                   >
@@ -342,7 +458,7 @@ export default function InternationalTransferPage() {
                 <div className="text-xs font-mono text-slate-400">
                   <span>MARKET EXCHANGE RATE</span>
                   <p className="text-xl font-bold font-mono text-white mt-1">
-                    1 GBP = ₦2,040.00 NGN
+                    1 {destinationCountry === "GB" ? "GBP" : "EUR"} = ₦{fxRate.toLocaleString("en-NG")} NGN
                   </p>
                   <p className="text-[11px] text-slate-400">
                     Interledger peer connector quote • Zero spread markup
@@ -352,7 +468,9 @@ export default function InternationalTransferPage() {
                 <div className="p-4 rounded-2xl bg-midnight-950 border border-midnight-800 space-y-2 text-xs font-mono">
                   <div className="flex justify-between text-slate-300">
                     <span>Source Funding:</span>
-                    <span className="text-white font-bold">GTBank ••6789</span>
+                    <span className="text-white font-bold">
+                      {currentUser.connectedBank.bankName} ({currentUser.connectedBank.accountNumber})
+                    </span>
                   </div>
                   <div className="flex justify-between text-slate-300">
                     <span>Target FX Value:</span>
@@ -379,7 +497,7 @@ export default function InternationalTransferPage() {
                   <div className="pt-1 flex justify-between text-xs text-slate-300">
                     <span>Recipient Receives:</span>
                     <span className="font-bold text-white">
-                      £{parsedGbp.toFixed(2)} GBP
+                      {destinationCountry === "GB" ? `£${parsedFx.toFixed(2)} GBP` : `€${parsedFx.toFixed(2)} EUR`}
                     </span>
                   </div>
                 </div>
@@ -393,24 +511,24 @@ export default function InternationalTransferPage() {
                 <div className="space-y-2 font-mono text-[11px]">
                   <div className="flex items-center gap-2 text-slate-300">
                     <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                    <span>Tier 1: Tomi Adebayo (GTBank ••6789)</span>
+                    <span>Tier 1: {currentUser.name} ({currentUser.connectedBank.bankName})</span>
                   </div>
                   <div className="flex items-center gap-2 text-acid-lime">
                     <span className="w-2 h-2 rounded-full bg-acid-lime" />
-                    <span>Tier 2: ILP Connector (FX NGN → GBP)</span>
+                    <span>Tier 2: ILP Connector (FX NGN → {destinationCountry === "GB" ? "GBP" : "EUR"})</span>
                   </div>
                   <div className="flex items-center gap-2 text-electric-cobalt">
                     <span className="w-2 h-2 rounded-full bg-electric-cobalt" />
                     <span>
                       {routeMode === "direct_ilp"
-                        ? "Tier 3: Barclays Direct ILP Endpoint"
-                        : "Tier 3: UK Payout Partner (ClearBank)"}
+                        ? `Tier 3: ${destinationCountry === "GB" ? "Barclays Direct ILP Endpoint" : "SEPA Direct Interledger Endpoint"}`
+                        : `Tier 3: Payout Partner (${destinationCountry === "GB" ? "ClearBank UK" : "Eurozone Clearing"})`}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-slate-300">
                     <span className="w-2 h-2 rounded-full bg-white" />
                     <span>
-                      Tier 4: Arthur Pendelton (Acct 88291044)
+                      Tier 4: {resolvedRecipient || "Foreign Beneficiary"}
                     </span>
                   </div>
                 </div>
@@ -428,7 +546,7 @@ export default function InternationalTransferPage() {
           title={transferSettled ? "International Payment Cleared" : "Confirm International Transfer"}
           subtitle={
             transferSettled
-              ? "Settled in recipient's UK bank account"
+              ? `Settled in recipient's foreign bank account via Interledger`
               : "Review live Interledger conversion details"
           }
         >
@@ -436,18 +554,26 @@ export default function InternationalTransferPage() {
             <div className="space-y-6">
               <div className="rounded-2xl bg-slate-50 p-4 border border-slate-200/80 space-y-2 text-xs">
                 <div className="flex justify-between text-slate-600">
+                  <span>Sender Account:</span>
+                  <span className="font-bold text-slate-900">{currentUser.name}</span>
+                </div>
+                <div className="flex justify-between text-slate-600">
                   <span>Recipient:</span>
                   <span className="font-bold text-slate-900">{resolvedRecipient}</span>
                 </div>
                 <div className="flex justify-between text-slate-600">
-                  <span>UK Account:</span>
+                  <span>Destination:</span>
                   <span className="font-mono text-slate-900">
-                    Barclays • Sort {sortCode} • {accountNumber}
+                    {destinationCountry === "GB"
+                      ? `Barclays • Sort ${sortCode} • ${accountNumber}`
+                      : iban}
                   </span>
                 </div>
                 <div className="flex justify-between text-slate-600">
                   <span>Exchange Rate:</span>
-                  <span className="font-mono text-slate-900">1 GBP = ₦2,040.00</span>
+                  <span className="font-mono text-slate-900">
+                    1 {destinationCountry === "GB" ? "GBP" : "EUR"} = ₦{fxRate.toLocaleString()}
+                  </span>
                 </div>
                 <div className="flex justify-between text-slate-600 font-bold text-sm pt-2 border-t border-slate-200">
                   <span>Amount Debited:</span>
@@ -457,7 +583,9 @@ export default function InternationalTransferPage() {
                 </div>
                 <div className="flex justify-between text-emerald-700 font-bold">
                   <span>Beneficiary Receives:</span>
-                  <span className="font-mono">£{parsedGbp.toFixed(2)} GBP</span>
+                  <span className="font-mono">
+                    {destinationCountry === "GB" ? `£${parsedFx.toFixed(2)} GBP` : `€${parsedFx.toFixed(2)} EUR`}
+                  </span>
                 </div>
               </div>
 
@@ -480,17 +608,17 @@ export default function InternationalTransferPage() {
 
               <div>
                 <h4 className="text-xl font-black text-midnight-950 font-sans">
-                  £{parsedGbp.toFixed(2)} GBP Delivered
+                  {destinationCountry === "GB" ? `£${parsedFx.toFixed(2)} GBP` : `€${parsedFx.toFixed(2)} EUR`} Delivered
                 </h4>
                 <p className="text-xs text-slate-500 mt-1">
-                  ILP Packet ID: <span className="font-mono text-slate-700">ilp:pk_44910283fa71</span>
+                  Reference: <span className="font-mono text-slate-700">{transferResult?.reference}</span>
                 </p>
               </div>
 
               <div className="rounded-2xl bg-slate-50 p-4 border border-slate-200 text-xs text-left space-y-1.5 font-mono">
                 <div className="flex justify-between">
                   <span className="text-slate-500">Destination:</span>
-                  <span>Barclays Bank UK • Arthur Pendelton</span>
+                  <span>{transferResult?.recipient}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Execution Speed:</span>
@@ -498,11 +626,22 @@ export default function InternationalTransferPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Correspondent Deduction:</span>
-                  <span className="text-emerald-600 font-bold">£0.00</span>
+                  <span className="text-emerald-600 font-bold">£0.00 / €0.00</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">ILP Packet:</span>
+                  <span className="text-electric-cobalt truncate max-w-[170px]">{transferResult?.packetId}</span>
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              <div className="p-3 bg-slate-100 rounded-xl text-xs text-slate-600 text-left space-y-1">
+                <p className="font-bold text-midnight-950">✓ Ledger Updated Successfully</p>
+                <p className="text-[11px] text-slate-500">
+                  Sender balance debited. Beneficiary credited via Interledger. Sign out at the bottom left to log into {transferResult?.recipient}&apos;s account and view their incoming credit!
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   variant="outline"
                   size="md"

@@ -22,6 +22,7 @@ import {
   Clock,
   Sparkles,
   Zap,
+  LogOut,
 } from "lucide-react";
 
 export default function SendMoneyPage() {
@@ -31,17 +32,18 @@ export default function SendMoneyPage() {
   );
 
   // Nigerian Bank Form State
-  const [selectedBank, setSelectedBank] = useState("gtb");
-  const [accountNumber, setAccountNumber] = useState("0123456789");
-  const [resolvedName, setResolvedName] = useState<string | null>("Oluwatobi Adebayo");
+  const [selectedBank, setSelectedBank] = useState("access");
+  const [accountNumber, setAccountNumber] = useState("0918231920");
+  const [resolvedName, setResolvedName] = useState<string | null>("Chioma Okonkwo");
   const [isResolving, setIsResolving] = useState(false);
-  const [amountNgn, setAmountNgn] = useState("250000");
+  const [amountNgn, setAmountNgn] = useState("50000");
 
   // Veylo Account Form State
-  const [veyloRecipientInput, setVeyloRecipientInput] = useState("718 902 4410");
-  const [resolvedVeyloUser, setResolvedVeyloUser] = useState<string | null>("Chioma Okonkwo (@chioma)");
+  const defaultOtherUser = allUsers.find((u) => u.id !== currentUser.id) || allUsers[1];
+  const [veyloRecipientInput, setVeyloRecipientInput] = useState(defaultOtherUser.veyloAccountNumber);
+  const [resolvedVeyloUser, setResolvedVeyloUser] = useState<string | null>(defaultOtherUser.name);
   const [resolvedOpenPaymentsPointer, setResolvedOpenPaymentsPointer] = useState<string | null>(
-    "https://ilp.interledger-test.dev/chioma"
+    defaultOtherUser.openPaymentsAddress
   );
 
   // Authorization Modal State
@@ -53,16 +55,29 @@ export default function SendMoneyPage() {
     recipient: string;
   } | null>(null);
 
-  // Handle bank account resolution
+  // Handle bank account resolution dynamically
   const handleAccountChange = (val: string) => {
     const clean = val.replace(/\D/g, "").slice(0, 10);
     setAccountNumber(clean);
+
     if (clean.length === 10) {
       setIsResolving(true);
       setTimeout(() => {
         setIsResolving(false);
-        setResolvedName("Oluwatobi Adebayo");
-      }, 350);
+        if (clean === "0918231920" || clean.endsWith("1920")) {
+          setSelectedBank("access");
+          setResolvedName("Chioma Okonkwo");
+        } else if (clean === "2201994419" || clean.endsWith("4419")) {
+          setSelectedBank("zenith");
+          setResolvedName("Babatunde Adeleke");
+        } else if (clean === "0123456789" || clean.endsWith("6789")) {
+          setSelectedBank("gtb");
+          setResolvedName("Oluwatobi Adebayo");
+        } else {
+          const currentBank = NIGERIAN_BANKS.find((b) => b.id === selectedBank)?.name || "Commercial Bank";
+          setResolvedName(`Verified Beneficiary (${currentBank})`);
+        }
+      }, 300);
     } else {
       setResolvedName(null);
     }
@@ -70,12 +85,26 @@ export default function SendMoneyPage() {
 
   const handleVeyloRecipientChange = async (val: string) => {
     setVeyloRecipientInput(val);
-    if (val.trim().length >= 4) {
-      const res = await resolveOpenPaymentsAddress(val);
-      if (res.resolvedDemoUser) {
-        setResolvedVeyloUser(`${res.resolvedDemoUser.name} (${res.resolvedDemoUser.handle})`);
-        setResolvedOpenPaymentsPointer(res.resolvedDemoUser.openPaymentsAddress);
+    const clean = val.trim().toLowerCase().replace(/[\s\-\•]/g, "");
+
+    if (clean.length >= 3) {
+      const matched = allUsers.find((u) => {
+        const uAcc = u.veyloAccountNumber.replace(/[\s\-\•]/g, "").toLowerCase();
+        const uHandle = u.handle.toLowerCase().replace("@", "");
+        return (
+          uAcc === clean ||
+          clean.includes(uAcc) ||
+          uHandle === clean ||
+          clean.includes(uHandle) ||
+          u.name.toLowerCase().includes(clean)
+        );
+      });
+
+      if (matched) {
+        setResolvedVeyloUser(matched.name);
+        setResolvedOpenPaymentsPointer(matched.openPaymentsAddress);
       } else {
+        const res = await resolveOpenPaymentsAddress(val);
         setResolvedVeyloUser(res.publicName);
         setResolvedOpenPaymentsPointer(res.id);
       }
@@ -93,9 +122,10 @@ export default function SendMoneyPage() {
     setIsAuthenticating(true);
     setTimeout(() => {
       setIsAuthenticating(false);
+
       const recipientName =
         activeTab === "nigerian_bank"
-          ? (resolvedName || "Oluwatobi Adebayo")
+          ? (resolvedName || "Nigerian Beneficiary")
           : (resolvedVeyloUser || "Veylo Recipient");
 
       const recipientIdentifier =
@@ -182,6 +212,51 @@ export default function SendMoneyPage() {
               </p>
             </div>
 
+            {/* Quick Demo Beneficiary Accounts */}
+            <div className="space-y-2">
+              <span className="text-[11px] font-mono text-slate-500 uppercase font-semibold">
+                Quick Select Demo Beneficiary:
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedBank("access");
+                    setAccountNumber("0918231920");
+                    setResolvedName("Chioma Okonkwo");
+                  }}
+                  className="p-2.5 rounded-xl border border-slate-200 text-left hover:border-electric-cobalt hover:bg-electric-cobalt/5 transition-all text-xs"
+                >
+                  <p className="font-bold text-midnight-950">Chioma Okonkwo</p>
+                  <p className="text-[10px] text-slate-500 font-mono">Access Bank • 0918231920</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedBank("zenith");
+                    setAccountNumber("2201994419");
+                    setResolvedName("Babatunde Adeleke");
+                  }}
+                  className="p-2.5 rounded-xl border border-slate-200 text-left hover:border-electric-cobalt hover:bg-electric-cobalt/5 transition-all text-xs"
+                >
+                  <p className="font-bold text-midnight-950">Babatunde Adeleke</p>
+                  <p className="text-[10px] text-slate-500 font-mono">Zenith Bank • 2201994419</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedBank("gtb");
+                    setAccountNumber("0123456789");
+                    setResolvedName("Oluwatobi Adebayo");
+                  }}
+                  className="p-2.5 rounded-xl border border-slate-200 text-left hover:border-electric-cobalt hover:bg-electric-cobalt/5 transition-all text-xs"
+                >
+                  <p className="font-bold text-midnight-950">Oluwatobi Adebayo</p>
+                  <p className="text-[10px] text-slate-500 font-mono">GTBank • 0123456789</p>
+                </button>
+              </div>
+            </div>
+
             <div className="space-y-4">
               {/* Destination Bank Select */}
               <div className="space-y-1.5 text-left">
@@ -206,10 +281,10 @@ export default function SendMoneyPage() {
                 label="10-Digit Account Number"
                 value={accountNumber}
                 onChange={(e) => handleAccountChange(e.target.value)}
-                placeholder="e.g. 0123456789"
+                placeholder="e.g. 0918231920"
                 verified={!!resolvedName}
                 leftAddon={<Building2 className="w-4 h-4" />}
-                helperText="Enter the recipient's standard 10-digit NUBAN."
+                helperText="Enter any 10-digit NUBAN. Automatically resolves beneficiary."
               />
 
               {/* Real-time Beneficiary Resolution Card */}
@@ -233,7 +308,10 @@ export default function SendMoneyPage() {
                     {resolvedName}
                   </p>
                   <p className="text-xs text-emerald-700 font-mono">
-                    Guaranty Trust Bank (GTBank) • {accountNumber}
+                    {NIGERIAN_BANKS.find((b) => b.id === selectedBank)?.name} • {accountNumber}
+                  </p>
+                  <p className="text-[11px] text-slate-500 pt-1">
+                    Your recipient does not need a Veylo account to receive this transfer.
                   </p>
                 </div>
               )}
@@ -325,7 +403,7 @@ export default function SendMoneyPage() {
                       type="button"
                       onClick={() => {
                         setVeyloRecipientInput(otherUser.veyloAccountNumber);
-                        setResolvedVeyloUser(`${otherUser.name} (${otherUser.handle})`);
+                        setResolvedVeyloUser(otherUser.name);
                         setResolvedOpenPaymentsPointer(otherUser.openPaymentsAddress);
                       }}
                       className="p-2.5 rounded-xl border border-slate-200 text-left hover:border-electric-cobalt hover:bg-electric-cobalt/5 transition-all text-xs"
@@ -333,6 +411,9 @@ export default function SendMoneyPage() {
                       <p className="font-bold text-midnight-950 truncate">{otherUser.name}</p>
                       <p className="text-[10px] font-mono text-electric-cobalt truncate">
                         {otherUser.handle}
+                      </p>
+                      <p className="text-[10px] font-mono text-slate-400 truncate">
+                        {otherUser.veyloAccountNumber}
                       </p>
                     </button>
                   ))}
@@ -412,7 +493,9 @@ export default function SendMoneyPage() {
                 </div>
                 <div className="flex items-center justify-between text-slate-600">
                   <span>Beneficiary:</span>
-                  <span className="font-bold text-slate-900">{resolvedName || resolvedVeyloUser}</span>
+                  <span className="font-bold text-slate-900">
+                    {activeTab === "nigerian_bank" ? resolvedName : resolvedVeyloUser}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between text-slate-600">
                   <span>Amount Debited:</span>
@@ -451,21 +534,12 @@ export default function SendMoneyPage() {
                       key={i}
                       type="password"
                       maxLength={1}
-                      defaultValue="•"
-                      className="w-10 h-12 rounded-xl border border-slate-300 text-center font-bold text-lg focus:ring-2 focus:ring-electric-cobalt focus:outline-none"
+                      defaultValue={i < 4 ? "•" : ""}
+                      className="w-10 h-12 text-center text-lg font-bold border border-slate-200 rounded-xl bg-slate-50"
+                      readOnly
                     />
                   ))}
                 </div>
-
-                <Button
-                  variant="primary"
-                  size="md"
-                  onClick={handleAuthorize}
-                  isLoading={isAuthenticating}
-                  className="w-full justify-center"
-                >
-                  Confirm with PIN
-                </Button>
               </div>
             </div>
           ) : (
@@ -476,7 +550,7 @@ export default function SendMoneyPage() {
 
               <div>
                 <h4 className="text-xl font-black text-midnight-950 font-sans">
-                  ₦{parsedAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })} Sent
+                  ₦{parsedAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })} Cleared
                 </h4>
                 <p className="text-xs text-slate-500 mt-1">
                   Reference: <span className="font-mono text-slate-700">{transferResult.reference}</span>
@@ -498,18 +572,21 @@ export default function SendMoneyPage() {
                 </div>
               </div>
 
-              <p className="text-xs text-slate-500">
-                Tip: Use the persona switcher in the top bar to switch to {transferResult.recipient} and see their updated balance and incoming receipt!
-              </p>
+              <div className="p-3 bg-slate-100 rounded-xl text-xs text-slate-600 text-left space-y-1">
+                <p className="font-bold text-midnight-950">✓ Ledger Updated Successfully</p>
+                <p className="text-[11px] text-slate-500">
+                  Your balance has been debited. To verify the credited balance and receipt for {transferResult.recipient}, sign out at the bottom left and log into their account.
+                </p>
+              </div>
 
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   variant="outline"
                   size="md"
                   onClick={handleReset}
                   className="flex-1"
                 >
-                  Make Another Transfer
+                  Send Another
                 </Button>
                 <Button
                   variant="primary"
@@ -517,7 +594,7 @@ export default function SendMoneyPage() {
                   href="/app/activity"
                   className="flex-1"
                 >
-                  View Activity
+                  View in Activity Ledger
                 </Button>
               </div>
             </div>

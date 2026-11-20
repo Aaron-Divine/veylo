@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { AppLayoutClient } from "@/components/layout/AppLayoutClient";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -23,6 +23,12 @@ export default function ActivityPage() {
     userTransactions.length > 0 ? userTransactions[0] : null
   );
   const [downloadSuccess, setDownloadSuccess] = useState(false);
+
+  useEffect(() => {
+    if (userTransactions.length > 0 && (!selectedTx || !userTransactions.some((t) => t.id === selectedTx.id))) {
+      setSelectedTx(userTransactions[0]);
+    }
+  }, [userTransactions, selectedTx]);
 
   const filteredTransactions = userTransactions.filter((tx) => {
     if (filter === "transfers") return tx.category === "transfer";

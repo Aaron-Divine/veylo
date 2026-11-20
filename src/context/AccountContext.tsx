@@ -126,15 +126,32 @@ export const AccountProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     const nowStr = "Just now";
 
-    // 1. Check if recipient is another Veylo demo account
-    const matchedRecipient = users.find(
-      (u) =>
-        u.id !== currentUser.id &&
-        (u.veyloAccountNumber.replace(/\s+/g, "") === recipientIdentifier.replace(/\s+/g, "") ||
-          u.handle.toLowerCase() === recipientIdentifier.toLowerCase() ||
-          u.handle.replace("@", "").toLowerCase() === recipientIdentifier.toLowerCase() ||
-          u.name.toLowerCase() === recipientName.toLowerCase())
-    );
+    // Normalize identifier and name for flexible matching across all 5 demo accounts
+    const cleanId = recipientIdentifier.trim().toLowerCase().replace(/[\s\-\•]/g, "");
+    const cleanName = recipientName.trim().toLowerCase();
+
+    // 1. Check if recipient matches any of the demo accounts
+    const matchedRecipient = users.find((u) => {
+      if (u.id === currentUser.id) return false;
+      const uAcc = u.veyloAccountNumber.replace(/[\s\-\•]/g, "").toLowerCase();
+      const uHandle = u.handle.toLowerCase().replace("@", "");
+      const uName = u.name.toLowerCase();
+      const uBankAcc = u.connectedBank.accountNumber.replace(/[\s\-\•]/g, "").toLowerCase();
+      const uOp = u.openPaymentsAddress.toLowerCase();
+
+      return (
+        uAcc === cleanId ||
+        cleanId.includes(uAcc) ||
+        uHandle === cleanId ||
+        cleanId.includes(uHandle) ||
+        cleanName.includes(uName) ||
+        uName.includes(cleanName) ||
+        (cleanId.length >= 4 && uBankAcc.includes(cleanId)) ||
+        (cleanId.length >= 4 && cleanId.includes(uBankAcc)) ||
+        cleanId.includes(uOp) ||
+        uOp.includes(cleanId)
+      );
+    });
 
     // 2. Outgoing transaction for sender
     const senderTx: Transaction = {
@@ -145,7 +162,7 @@ export const AccountProvider: React.FC<{ children: React.ReactNode }> = ({ child
       recipientName,
       recipientIdentifier,
       destinationBankOrProvider,
-      sourceFunding: `Connected Bank Account: ${currentUser.connectedBank.bankName} ${currentUser.connectedBank.accountNumber}`,
+      sourceFunding: `Connected Bank: ${currentUser.connectedBank.bankName} (${currentUser.connectedBank.accountNumber})`,
       amountNgn,
       destinationAmount,
       destinationCurrency,
@@ -166,8 +183,8 @@ export const AccountProvider: React.FC<{ children: React.ReactNode }> = ({ child
           destinationType: "veylo",
           recipientName: currentUser.name,
           recipientIdentifier: currentUser.veyloAccountNumber,
-          destinationBankOrProvider: "Open Payments Interledger",
-          sourceFunding: `Veylo Account ${currentUser.veyloAccountNumber}`,
+          destinationBankOrProvider: matchedRecipient.connectedBank.bankName,
+          sourceFunding: `Veylo Account: ${currentUser.name} (${currentUser.veyloAccountNumber})`,
           amountNgn,
           destinationAmount,
           destinationCurrency,
@@ -180,28 +197,61 @@ export const AccountProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }
       : null;
 
-    // Update state
-    setUsers((prevUsers) =>
-      prevUsers.map((u) => {
+    // 4. Update state for both sender and recipient
+    setUsers((prevUsers) => {
+      const updated = prevUsers.map((u) => {
         if (u.id === currentUser.id) {
+          const updatedForeign = u.foreignBalance
+            ? {
+                ...u.foreignBalance,
+                amount: Math.max(
+                  0,
+                  u.foreignBalance.amount - (destinationAmount || amountNgn / (u.currency === "GBP" ? 2040 : 2200))
+                ),
+              }
+            : undefined;
+
           return {
             ...u,
             totalBalanceNgn: Math.max(0, u.totalBalanceNgn - totalDebitNgn),
             availableBalanceNgn: Math.max(0, u.availableBalanceNgn - totalDebitNgn),
+            foreignBalance: updatedForeign,
           };
         }
         if (matchedRecipient && u.id === matchedRecipient.id) {
+          const creditedForeign = u.foreignBalance
+            ? {
+                ...u.foreignBalance,
+                amount:
+                  u.foreignBalance.amount +
+                  (destinationAmount || amountNgn / (u.currency === "GBP" ? 2040 : 2200)),
+              }
+            : undefined;
+
           return {
             ...u,
             totalBalanceNgn: u.totalBalanceNgn + amountNgn,
             availableBalanceNgn: u.availableBalanceNgn + amountNgn,
+            foreignBalance: creditedForeign,
           };
         }
         return u;
-      })
-    );
+      });
 
-    setTransactions((prev) => [senderTx, ...(recipientTx ? [recipientTx] : []), ...prev]);
+      try {
+        localStorage.setItem("veylo_users_state", JSON.stringify(updated));
+      } catch (e) {}
+
+      return updated;
+    });
+
+    setTransactions((prev) => {
+      const updated = [senderTx, ...(recipientTx ? [recipientTx] : []), ...prev];
+      try {
+        localStorage.setItem("veylo_transactions_state", JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
 
     return {
       success: true,
