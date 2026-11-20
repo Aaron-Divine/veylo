@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useAccount } from "@/context/AccountContext";
+import { UserProfile } from "@/types";
 import {
   ShieldCheck,
   ArrowRight,
@@ -15,55 +16,111 @@ import {
   CheckCircle2,
   Building2,
   Globe2,
-  Fingerprint,
-  Sparkles,
-  ArrowLeft,
   Lock,
+  ArrowLeft,
+  KeyRound,
+  Users,
 } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { allUsers, currentUser, switchUser, testnetStatus } = useAccount();
+  const { allUsers, switchUser, setCustomUser, testnetStatus } = useAccount();
 
-  const [activeTab, setActiveTab] = useState<"quick_select" | "manual">("quick_select");
-  const [manualIdentifier, setManualIdentifier] = useState("");
+  const [activeTab, setActiveTab] = useState<"account" | "demo">("account");
+
+  // All fields start completely empty
+  const [accountNumber, setAccountNumber] = useState("");
+  const [pin, setPin] = useState("");
+
+  const [isLoading, setIsLoading] = useState(false);
   const [authenticatingUserId, setAuthenticatingUserId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Sign in with selected demo account
-  const handleSelectAccount = (userId: string) => {
+  // Sign in with Real/Registered Account Number & PIN
+  const handleAccountLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+
+    const cleanAcc = accountNumber.trim().replace(/\s+/g, "");
+    const cleanPin = pin.trim();
+
+    if (!cleanAcc) {
+      setErrorMsg("Please enter your 10-digit Veylo Account Number or email.");
+      return;
+    }
+    if (!cleanPin) {
+      setErrorMsg("Please enter your 4-digit PIN.");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          account_number: cleanAcc,
+          pin: cleanPin,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.status !== "success" || !data.account) {
+        setErrorMsg(data.message || "Invalid account credentials. Please verify your Account Number and PIN.");
+        setIsLoading(false);
+        return;
+      }
+
+      const acc = data.account;
+      const formattedAcc = acc.account_number.length === 10
+        ? `${acc.account_number.slice(0, 3)} ${acc.account_number.slice(3, 6)} ${acc.account_number.slice(6)}`
+        : acc.account_number;
+
+      const userProfile: UserProfile = {
+        id: `usr_${acc.id}`,
+        name: acc.owner_name,
+        email: acc.owner_email,
+        handle: `@${acc.owner_name.toLowerCase().replace(/\s+/g, "")}`,
+        role: "consumer",
+        veyloAccountNumber: formattedAcc,
+        isVerified: true,
+        location: "Lagos, Nigeria",
+        openPaymentsAddress: `https://ilp.interledger-test.dev/${acc.owner_name.toLowerCase().replace(/\s+/g, "")}`,
+        connectedBank: {
+          bankName: "Veylo Simulated Bank",
+          accountNumber: "••" + acc.account_number.slice(-4),
+          accountHolder: acc.owner_name,
+          currency: "NGN",
+          status: "connected",
+        },
+        totalBalanceNgn: acc.balance_ngn,
+        availableBalanceNgn: acc.balance_ngn,
+        currency: "NGN",
+      };
+
+      setCustomUser(userProfile);
+
+      setTimeout(() => {
+        router.push("/app");
+      }, 400);
+    } catch (err: any) {
+      console.error("Login error:", err);
+      setErrorMsg("Could not connect to Veylo server. Please check network.");
+      setIsLoading(false);
+    }
+  };
+
+  // Sign in with pre-configured demo account
+  const handleSelectDemoAccount = (userId: string) => {
     setAuthenticatingUserId(userId);
     setErrorMsg(null);
     switchUser(userId);
 
     setTimeout(() => {
       router.push("/app");
-    }, 600);
-  };
-
-  // Sign in with manual input (resolve by account number or handle)
-  const handleManualSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg(null);
-
-    const cleanInput = manualIdentifier.trim().toLowerCase().replace(/\s+/g, "");
-    if (!cleanInput) {
-      setErrorMsg("Please enter your 10-digit Veylo Account Number or @handle");
-      return;
-    }
-
-    const matchedUser = allUsers.find((u) => {
-      const cleanAcc = u.veyloAccountNumber.replace(/\s+/g, "");
-      const cleanHandle = u.handle.toLowerCase();
-      return cleanAcc === cleanInput || cleanHandle === cleanInput || cleanHandle === `@${cleanInput}`;
-    });
-
-    if (matchedUser) {
-      handleSelectAccount(matchedUser.id);
-    } else {
-      // Default fallback for demo flexibility
-      handleSelectAccount("usr_tomi");
-    }
+    }, 500);
   };
 
   return (
@@ -95,172 +152,166 @@ export default function LoginPage() {
         <div className="text-center space-y-2 mb-8">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#3D5BFF]/10 text-xs font-mono font-bold text-[#3D5BFF]">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>CRYPTOGRAPHIC MULTI-ACCOUNT AUTHENTICATION</span>
+            <span>OPEN PAYMENTS AUTHENTICATION</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-[#111B32] font-sans tracking-tight">
             Sign In to Veylo
           </h1>
           <p className="text-sm text-slate-500 max-w-lg mx-auto">
-            Choose an account to sign in, or enter your 10-digit Veylo Account Number to authenticate via Passkey or Face ID.
+            Enter your 10-digit Veylo Account Number and 4-digit PIN to access your wallet.
           </p>
         </div>
 
         {/* Tab Controls */}
         <div className="max-w-md mx-auto flex p-1.5 bg-slate-200/80 rounded-2xl gap-1 mb-8 shadow-inner">
           <button
-            onClick={() => setActiveTab("quick_select")}
+            onClick={() => { setActiveTab("account"); setErrorMsg(null); }}
             className={`flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
-              activeTab === "quick_select"
+              activeTab === "account"
                 ? "bg-white text-midnight-950 shadow-sm"
                 : "text-slate-600 hover:text-midnight-950"
             }`}
           >
-            <UserCheck className="w-4 h-4 text-[#3D5BFF]" />
-            <span>Demo Accounts (5)</span>
+            <KeyRound className="w-4 h-4 text-[#3D5BFF]" />
+            <span>Account Login</span>
           </button>
           <button
-            onClick={() => setActiveTab("manual")}
+            onClick={() => { setActiveTab("demo"); setErrorMsg(null); }}
             className={`flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
-              activeTab === "manual"
+              activeTab === "demo"
                 ? "bg-white text-midnight-950 shadow-sm"
                 : "text-slate-600 hover:text-midnight-950"
             }`}
           >
-            <Fingerprint className="w-4 h-4 text-[#3D5BFF]" />
-            <span>Manual Sign In</span>
+            <Users className="w-4 h-4 text-[#3D5BFF]" />
+            <span>Demo Personas</span>
           </button>
         </div>
 
-        {/* ========================================================
-            TAB 1: PREMIUM DEMO ACCOUNT SELECTOR (5 Accounts)
-           ======================================================== */}
-        {activeTab === "quick_select" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {allUsers.map((user) => {
-              const isSelected = authenticatingUserId === user.id;
-
-              return (
-                <div
-                  key={user.id}
-                  onClick={() => handleSelectAccount(user.id)}
-                  className={`relative p-5 rounded-2xl border transition-all cursor-pointer text-left bg-white shadow-sm hover:shadow-md active:scale-[0.99] flex flex-col justify-between gap-4 group ${
-                    isSelected
-                      ? "border-[#3D5BFF] ring-2 ring-[#3D5BFF]/30 bg-[#3D5BFF]/5"
-                      : "border-slate-200 hover:border-slate-300"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={user.avatarUrl}
-                          alt={user.name}
-                          className="w-12 h-12 rounded-full object-cover ring-2 ring-slate-200 group-hover:ring-[#3D5BFF] transition-all"
-                        />
-                        <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[#10B981] rounded-full border-2 border-white" />
-                      </div>
-
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-base font-bold text-[#111B32] group-hover:text-[#3D5BFF] transition-colors">
-                            {user.name}
-                          </h3>
-                          <span className="text-[10px] font-mono font-bold uppercase text-[#3D5BFF] bg-[#3D5BFF]/10 px-2 py-0.5 rounded-full">
-                            {user.role}
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-500 font-mono mt-0.5">
-                          {user.handle} • {user.location}
-                        </p>
-                      </div>
-                    </div>
-
-                    <span className="text-xs font-mono font-bold text-[#111B32] bg-[#F1F5F9] px-2.5 py-1 rounded-lg shrink-0">
-                      {user.currency === "NGN"
-                        ? `₦${(user.availableBalanceNgn).toLocaleString("en-NG")}`
-                        : user.currency === "GBP"
-                        ? `£${user.foreignBalance?.amount.toLocaleString("en-GB")}`
-                        : `€${user.foreignBalance?.amount.toLocaleString("de-DE")}`}
-                    </span>
-                  </div>
-
-                  {/* Account Metadata Row */}
-                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                    <div className="flex items-center gap-1.5 font-mono">
-                      <span className="bg-[#111B32] text-[#D8F15B] px-2 py-0.5 rounded text-[11px] font-bold">
-                        {user.veyloAccountNumber}
-                      </span>
-                      <span className="text-[11px] text-slate-400">({user.connectedBank.bankName})</span>
-                    </div>
-
-                    <button
-                      className={`inline-flex items-center gap-1 text-xs font-bold transition-colors ${
-                        isSelected ? "text-[#3D5BFF]" : "text-slate-600 group-hover:text-[#3D5BFF]"
-                      }`}
-                    >
-                      {isSelected ? (
-                        <>
-                          <span className="animate-spin w-3.5 h-3.5 border-2 border-[#3D5BFF] border-t-transparent rounded-full" />
-                          <span>Signing In...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>Sign In</span>
-                          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* ========================================================
-            TAB 2: MANUAL ACCOUNT NUMBER & PASSKEY FORM
-           ======================================================== */}
-        {activeTab === "manual" && (
+        {/* TAB 1: REAL ACCOUNT & PIN LOGIN */}
+        {activeTab === "account" && (
           <div className="max-w-md mx-auto">
             <Card variant="white" className="p-8 shadow-xl space-y-6">
               <div className="space-y-1 text-center">
-                <h3 className="text-lg font-bold text-[#111B32]">Manual Credentials</h3>
+                <h3 className="text-lg font-bold text-[#111B32]">Sign In with Account Number</h3>
                 <p className="text-xs text-slate-500">
-                  Enter any 10-digit account number (e.g. 482 193 7604) or verified handle
+                  Enter your unique 10-digit number and wallet PIN
                 </p>
               </div>
 
-              <form onSubmit={handleManualSubmit} className="space-y-4">
+              {errorMsg && (
+                <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-600 font-semibold animate-in fade-in">
+                  {errorMsg}
+                </div>
+              )}
+
+              <form onSubmit={handleAccountLogin} className="space-y-4">
                 <Input
-                  label="10-Digit Account Number or @handle"
-                  value={manualIdentifier}
-                  onChange={(e) => setManualIdentifier(e.target.value)}
-                  placeholder="e.g. 482 193 7604 or @tomiade"
+                  label="10-Digit Veylo Account Number"
+                  value={accountNumber}
+                  onChange={(e) => setAccountNumber(e.target.value)}
+                  placeholder="e.g. 10-digit account number"
+                  required
                   leftAddon={<UserCheck className="w-4 h-4 text-slate-400" />}
-                  error={errorMsg || undefined}
-                  helperText="Tip: Enter any demo number or handle"
+                  helperText="Your 10-digit number given at registration"
+                />
+
+                <Input
+                  label="4-Digit Wallet PIN"
+                  type="password"
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder="4-digit secret PIN"
+                  maxLength={6}
+                  required
+                  leftAddon={<Lock className="w-4 h-4 text-slate-400" />}
                 />
 
                 <Button
                   type="submit"
                   variant="primary"
                   size="lg"
-                  isLoading={authenticatingUserId !== null}
-                  className="w-full justify-center"
+                  isLoading={isLoading}
+                  className="w-full justify-center pt-3"
                   rightIcon={<ArrowRight className="w-4 h-4" />}
                 >
-                  Authorize with Passkey / Face ID
+                  Sign In to Wallet
                 </Button>
               </form>
 
               <div className="pt-4 border-t border-slate-100 text-center text-xs text-slate-500">
-                Don&apos;t have a Veylo account yet?{" "}
+                Don&apos;t have an account yet?{" "}
                 <Link href="/auth/register" className="text-[#3D5BFF] font-bold hover:underline">
-                  Claim Account Number
+                  Create & Fund Account
                 </Link>
               </div>
             </Card>
+          </div>
+        )}
+
+        {/* TAB 2: DEMO PERSONAS QUICK-SELECT */}
+        {activeTab === "demo" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {allUsers.slice(0, 5).map((user) => {
+              const isSelected = authenticatingUserId === user.id;
+
+              return (
+                <div
+                  key={user.id}
+                  onClick={() => handleSelectDemoAccount(user.id)}
+                  className={`p-6 rounded-2xl bg-white border transition-all cursor-pointer text-left flex flex-col justify-between gap-4 group ${
+                    isSelected
+                      ? "border-[#3D5BFF] ring-2 ring-[#3D5BFF]/30 shadow-md"
+                      : "border-slate-200 hover:border-[#3D5BFF]/60 hover:shadow-lg"
+                  }`}
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-100 border border-slate-200">
+                        {user.avatarUrl ? (
+                          <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center font-bold text-slate-500">
+                            {user.name.charAt(0)}
+                          </div>
+                        )}
+                      </div>
+
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold uppercase">
+                        {user.role}
+                      </span>
+                    </div>
+
+                    <div>
+                      <h4 className="font-bold text-midnight-950 text-base group-hover:text-[#3D5BFF] transition-colors">
+                        {user.name}
+                      </h4>
+                      <p className="text-xs font-mono text-slate-400">{user.handle}</p>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 space-y-1 text-xs">
+                      <div className="text-[10px] text-slate-400 font-mono uppercase">Veylo Account</div>
+                      <div className="font-mono font-bold text-midnight-950 text-sm tracking-wide">
+                        {user.veyloAccountNumber}
+                      </div>
+                      <div className="text-[11px] font-semibold text-emerald-600">
+                        Balance: ₦{user.totalBalanceNgn.toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-center group-hover:bg-[#3D5BFF] group-hover:text-white transition-all text-xs"
+                    rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
+                  >
+                    Select Persona
+                  </Button>
+                </div>
+              );
+            })}
           </div>
         )}
       </main>
@@ -269,8 +320,8 @@ export default function LoginPage() {
       <footer className="max-w-4xl mx-auto w-full pt-6 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-2">
         <p>© 2026 Veylo Inc. Connected to Open Payments Network.</p>
         <div className="flex items-center gap-4">
-          <Link href="/demo/checkout-architecture" className="hover:text-slate-600 transition-colors">
-            Protocol Security
+          <Link href="/auth/register" className="hover:text-slate-600 transition-colors">
+            Register Account
           </Link>
           <Link href="/business" className="hover:text-slate-600 transition-colors">
             Merchant Portal

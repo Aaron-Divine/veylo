@@ -36,6 +36,7 @@ interface AccountContextType {
   }) => { success: boolean; reference: string; packetId: string };
   revokeMandate: (mandateId: string) => void;
   resetAllDemoData: () => void;
+  setCustomUser: (user: UserProfile) => void;
 }
 
 const AccountContext = createContext<AccountContextType | undefined>(undefined);
@@ -52,12 +53,17 @@ export const AccountProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Load persisted demo state from localStorage on client mount if available
   useEffect(() => {
     try {
+      const savedUsers = localStorage.getItem("veylo_users_state");
+      let allLoadedUsers = DEMO_ACCOUNTS;
+      if (savedUsers) {
+        allLoadedUsers = JSON.parse(savedUsers);
+        setUsers(allLoadedUsers);
+      }
+
       const savedUserId = localStorage.getItem("veylo_current_user_id");
-      if (savedUserId && DEMO_ACCOUNTS.some((u) => u.id === savedUserId)) {
+      if (savedUserId && allLoadedUsers.some((u) => u.id === savedUserId)) {
         setCurrentUserId(savedUserId);
       }
-      const savedUsers = localStorage.getItem("veylo_users_state");
-      if (savedUsers) setUsers(JSON.parse(savedUsers));
 
       const savedTx = localStorage.getItem("veylo_transactions_state");
       if (savedTx) setTransactions(JSON.parse(savedTx));
@@ -278,6 +284,28 @@ export const AccountProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
+  const setCustomUser = (user: UserProfile) => {
+    setUsers((prev) => {
+      const cleanAcc = user.veyloAccountNumber.replace(/\s+/g, '');
+      const existingIdx = prev.findIndex(
+        (u) => u.id === user.id || u.veyloAccountNumber.replace(/\s+/g, '') === cleanAcc
+      );
+      let updated: UserProfile[];
+      if (existingIdx >= 0) {
+        updated = [...prev];
+        updated[existingIdx] = user;
+      } else {
+        updated = [user, ...prev];
+      }
+      try {
+        localStorage.setItem("veylo_users_state", JSON.stringify(updated));
+        localStorage.setItem("veylo_current_user_id", user.id);
+      } catch (e) {}
+      return updated;
+    });
+    setCurrentUserId(user.id);
+  };
+
   return (
     <AccountContext.Provider
       value={{
@@ -292,6 +320,7 @@ export const AccountProvider: React.FC<{ children: React.ReactNode }> = ({ child
         sendPayment,
         revokeMandate,
         resetAllDemoData,
+        setCustomUser,
       }}
     >
       {children}

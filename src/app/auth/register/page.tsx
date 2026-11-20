@@ -7,20 +7,136 @@ import { VeyloLogo } from "@/components/brand/VeyloLogo";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { ArrowRight, UserCheck, Phone, CheckCircle2 } from "lucide-react";
+import { useAccount } from "@/context/AccountContext";
+import { UserProfile } from "@/types";
+import {
+  ArrowRight,
+  UserCheck,
+  Phone,
+  Mail,
+  Lock,
+  Coins,
+  Copy,
+  Check,
+  Sparkles,
+  ExternalLink,
+} from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [fullName, setFullName] = useState("Tomi Adebayo");
-  const [phone, setPhone] = useState("+234 803 123 4567");
-  const [isLoading, setIsLoading] = useState(false);
+  const { setCustomUser } = useAccount();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // All inputs start completely blank with soft placeholders
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [pin, setPin] = useState("");
+  const [depositAmount, setDepositAmount] = useState(100000); // ₦100k demo deposit
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  // Success state after account is registered in Supabase
+  const [createdAccount, setCreatedAccount] = useState<{
+    account_number: string;
+    balance_ngn: number;
+    owner_name: string;
+    owner_email: string;
+  } | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg(null);
+
+    if (!fullName.trim()) {
+      setErrorMsg("Please enter your legal name or username.");
+      return;
+    }
+    if (!email.trim() || !email.includes("@")) {
+      setErrorMsg("Please enter a valid email address.");
+      return;
+    }
+    if (!pin.trim() || pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)) {
+      setErrorMsg("Please create a 4-digit numeric PIN.");
+      return;
+    }
+
     setIsLoading(true);
-    setTimeout(() => {
-      router.push("/app/onboarding");
-    }, 700);
+
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: fullName.trim(),
+          email: email.trim().toLowerCase(),
+          phone: phone.trim(),
+          pin: pin.trim(),
+          initial_balance_ngn: depositAmount,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.status !== "success" || !data.account) {
+        setErrorMsg(data.message || "Failed to create account. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+
+      const acc = data.account;
+      setCreatedAccount(acc);
+
+      // Convert to UserProfile and update AccountContext
+      const formattedAcc = acc.account_number.length === 10
+        ? `${acc.account_number.slice(0, 3)} ${acc.account_number.slice(3, 6)} ${acc.account_number.slice(6)}`
+        : acc.account_number;
+
+      const userProfile: UserProfile = {
+        id: `usr_${acc.id}`,
+        name: acc.owner_name,
+        email: acc.owner_email,
+        handle: `@${acc.owner_name.toLowerCase().replace(/\s+/g, "")}`,
+        role: "consumer",
+        veyloAccountNumber: formattedAcc,
+        isVerified: true,
+        location: "Lagos, Nigeria",
+        openPaymentsAddress: `https://ilp.interledger-test.dev/${acc.owner_name.toLowerCase().replace(/\s+/g, "")}`,
+        connectedBank: {
+          bankName: "Veylo Simulated Bank",
+          accountNumber: "••" + acc.account_number.slice(-4),
+          accountHolder: acc.owner_name,
+          currency: "NGN",
+          status: "connected",
+        },
+        totalBalanceNgn: acc.balance_ngn,
+        availableBalanceNgn: acc.balance_ngn,
+        currency: "NGN",
+      };
+
+      setCustomUser(userProfile);
+      setIsLoading(false);
+    } catch (err: any) {
+      console.error("Register error:", err);
+      setErrorMsg("Network error connecting to Veylo service.");
+      setIsLoading(false);
+    }
+  };
+
+  const formatDisplayNumber = (num: string) => {
+    const raw = num.replace(/\D/g, "");
+    if (raw.length === 10) {
+      return `${raw.slice(0, 3)} ${raw.slice(3, 6)} ${raw.slice(6)}`;
+    }
+    return num;
+  };
+
+  const copyToClipboard = () => {
+    if (!createdAccount) return;
+    navigator.clipboard.writeText(formatDisplayNumber(createdAccount.account_number));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -30,53 +146,195 @@ export default function RegisterPage() {
       </header>
 
       <main className="max-w-md mx-auto w-full my-auto">
-        <Card variant="white" className="p-8 sm:p-10 shadow-xl space-y-6">
-          <div className="space-y-2 text-center">
-            <h1 className="text-2xl sm:text-3xl font-black font-sans text-midnight-950">
-              Open your Veylo Account
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500">
-              Get an instant 10-digit interoperable payment number for all your banks and digital wallets.
-            </p>
-          </div>
+        {createdAccount ? (
+          /* SUCCESS STATE: Display newly created Account Number & instructions */
+          <Card variant="white" className="p-8 sm:p-10 shadow-2xl space-y-6 animate-in zoom-in-95 duration-300">
+            <div className="text-center space-y-2">
+              <div className="w-16 h-16 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 mx-auto flex items-center justify-center">
+                <Check className="w-8 h-8" />
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-black text-midnight-950 font-sans">
+                Account Created & Funded!
+              </h1>
+              <p className="text-xs text-slate-500">
+                Your unique 10-digit Veylo Account Number is registered and ready to use.
+              </p>
+            </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              label="Legal Full Name"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="e.g. Tomi Adebayo"
-              leftAddon={<UserCheck className="w-4 h-4 text-slate-400" />}
-            />
+            {/* Account Card Display */}
+            <div className="p-5 rounded-2xl bg-midnight-950 text-white space-y-3 shadow-lg">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-acid-lime font-bold">
+                  Your Veylo Account Number
+                </span>
+                <span className="text-[10px] font-mono text-slate-400">Unique Identifier</span>
+              </div>
 
-            <Input
-              label="Phone Number"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+234..."
-              leftAddon={<Phone className="w-4 h-4 text-slate-400" />}
-              helperText="Used to generate your 10-digit Veylo Account Number"
-            />
+              <div className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/10">
+                <span className="text-2xl sm:text-3xl font-mono font-black tracking-widest text-white">
+                  {formatDisplayNumber(createdAccount.account_number)}
+                </span>
+                <button
+                  type="button"
+                  onClick={copyToClipboard}
+                  className="p-2 rounded-lg bg-electric-cobalt text-white hover:bg-electric-cobalt/80 transition-colors flex items-center gap-1 text-xs font-bold"
+                  title="Copy account number"
+                >
+                  {copied ? <Check className="w-4 h-4 text-acid-lime" /> : <Copy className="w-4 h-4" />}
+                  <span>{copied ? "Copied" : "Copy"}</span>
+                </button>
+              </div>
 
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              isLoading={isLoading}
-              className="w-full justify-center"
-              rightIcon={<ArrowRight className="w-4 h-4" />}
-            >
-              Reserve Account Number
-            </Button>
-          </form>
+              <div className="pt-2 border-t border-white/10 flex items-center justify-between text-xs">
+                <div>
+                  <span className="text-[10px] text-slate-400 block uppercase">Simulated Balance</span>
+                  <span className="font-bold text-acid-lime text-base font-mono">
+                    ₦{createdAccount.balance_ngn.toLocaleString()}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] text-slate-400 block uppercase">Owner</span>
+                  <span className="font-semibold text-white">{createdAccount.owner_name}</span>
+                </div>
+              </div>
+            </div>
 
-          <div className="pt-4 border-t border-slate-100 text-center text-xs text-slate-500">
-            Already have an account?{" "}
-            <Link href="/auth/login" className="text-electric-cobalt font-bold hover:underline">
-              Sign In
-            </Link>
-          </div>
-        </Card>
+            {/* Learnify Instruction Callout */}
+            <div className="p-4 rounded-xl bg-electric-cobalt/10 border border-electric-cobalt/20 text-xs space-y-1.5">
+              <div className="font-bold text-electric-cobalt flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                <span>Ready to use on Learnify!</span>
+              </div>
+              <p className="text-slate-600 leading-relaxed">
+                Copy your 10-digit number above and use it with your 4-digit PIN at Learnify checkout to purchase any course.
+              </p>
+            </div>
+
+            <div className="space-y-3 pt-2">
+              <a
+                href="https://learnify-delta-six.vercel.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-3.5 px-4 rounded-xl bg-electric-cobalt text-white font-bold text-sm text-center flex items-center justify-center gap-2 hover:bg-electric-cobalt/90 transition-all shadow-md"
+              >
+                <span>Go to Learnify to Buy Course</span>
+                <ExternalLink className="w-4 h-4" />
+              </a>
+
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => router.push("/app")}
+                className="w-full justify-center text-slate-700"
+              >
+                Open Veylo Dashboard
+              </Button>
+            </div>
+          </Card>
+        ) : (
+          /* REGISTRATION FORM */
+          <Card variant="white" className="p-8 sm:p-10 shadow-xl space-y-6">
+            <div className="space-y-2 text-center">
+              <h1 className="text-2xl sm:text-3xl font-black font-sans text-midnight-950">
+                Open your Veylo Account
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500">
+                Get an instant 10-digit interoperable payment account and wallet PIN.
+              </p>
+            </div>
+
+            {errorMsg && (
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-600 font-semibold">
+                {errorMsg}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Input
+                label="Full Name or Username"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="username or full name"
+                required
+                leftAddon={<UserCheck className="w-4 h-4 text-slate-400" />}
+              />
+
+              <Input
+                label="Email Address"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@example.com"
+                required
+                leftAddon={<Mail className="w-4 h-4 text-slate-400" />}
+              />
+
+              <Input
+                label="Phone Number (Optional)"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="phone number e.g. +234..."
+                leftAddon={<Phone className="w-4 h-4 text-slate-400" />}
+              />
+
+              <Input
+                label="Create 4-Digit Wallet PIN"
+                type="password"
+                value={pin}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder="4-digit secret PIN"
+                maxLength={6}
+                required
+                leftAddon={<Lock className="w-4 h-4 text-slate-400" />}
+                helperText="Required to authorize debits and Learnify course purchases"
+              />
+
+              {/* Simulated Deposit Amount Selector */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                  Simulated Deposit Amount (₦)
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[50000, 100000, 250000].map((amt) => (
+                    <button
+                      key={amt}
+                      type="button"
+                      onClick={() => setDepositAmount(amt)}
+                      className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all ${
+                        depositAmount === amt
+                          ? "bg-electric-cobalt text-white border-electric-cobalt shadow-sm"
+                          : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                      }`}
+                    >
+                      ₦{amt.toLocaleString()}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Free test funds deposited immediately to your new account.
+                </p>
+              </div>
+
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                isLoading={isLoading}
+                className="w-full justify-center pt-3"
+                rightIcon={<ArrowRight className="w-4 h-4" />}
+              >
+                Create & Fund Account
+              </Button>
+            </form>
+
+            <div className="pt-4 border-t border-slate-100 text-center text-xs text-slate-500">
+              Already have an account?{" "}
+              <Link href="/auth/login" className="text-electric-cobalt font-bold hover:underline">
+                Sign In
+              </Link>
+            </div>
+          </Card>
+        )}
       </main>
 
       <footer className="max-w-md mx-auto w-full text-center text-xs text-slate-400">

@@ -89,13 +89,9 @@ export async function POST(req: NextRequest) {
 }
 
 /**
- * GET /api/accounts?number=4821937604 — Get account info by number.
+ * GET /api/accounts?number=4821937604 — Get safe public account info by number.
  */
 export async function GET(req: NextRequest) {
-  if (!requireApiKey(req)) {
-    return corsJson({ status: 'failed', code: 'UNAUTHORIZED', message: 'Invalid or missing API key.' }, 401);
-  }
-
   const { searchParams } = new URL(req.url);
   const accountNumber = searchParams.get('number');
 
