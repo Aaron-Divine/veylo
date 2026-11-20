@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import {
   UserProfile,
   Transaction,
@@ -37,6 +37,7 @@ interface AccountContextType {
   revokeMandate: (mandateId: string) => void;
   resetAllDemoData: () => void;
   setCustomUser: (user: UserProfile) => void;
+  syncLiveAccount: (accountNumber?: string) => Promise<void>;
 }
 
 const AccountContext = createContext<AccountContextType | undefined>(undefined);
@@ -95,7 +96,12 @@ export const AccountProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  const userTransactions = transactions.filter((t) => t.userId === currentUserId);
+  const cleanCurrentAcc = (currentUser?.veyloAccountNumber || "").replace(/\s+/g, "");
+  const userTransactions = transactions.filter(
+    (t) =>
+      t.userId === currentUserId ||
+      (cleanCurrentAcc && (t.sourceFunding?.includes(cleanCurrentAcc) || t.recipientIdentifier?.includes(cleanCurrentAcc)))
+  );
   const userSubscriptions = subscriptions.filter((s) => s.userId === currentUserId);
 
   /**
@@ -306,6 +312,87 @@ export const AccountProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setCurrentUserId(user.id);
   };
 
+  // Sync live balance and transactions from Supabase
+  const syncLiveAccount = useCallback(async (accountNumber?: string) => {
+    const accNum = accountNumber || currentUser?.veyloAccountNumber;
+    if (!accNum) return;
+    const clean = accNum.replace(/\s+/g, '');
+
+    try {
+      // 1. Fetch live balance from Supabase
+      const res = await fetch(`/api/accounts?number=${clean}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.status === 'success' && data.account) {
+          const freshBalance = Number(data.account.balance_ngn);
+          setUsers((prev) =>
+            prev.map((u) =>
+              u.veyloAccountNumber.replace(/\s+/g, '') === clean
+                ? {
+                    ...u,
+                    totalBalanceNgn: freshBalance,
+                    availableBalanceNgn: freshBalance,
+                  }
+                : u
+            )
+          );
+        }
+      }
+
+      // 2. Fetch live transactions from Supabase
+      const txRes = await fetch(`/api/transactions?account_number=${clean}`);
+      if (txRes.ok) {
+        const txData = await txRes.json();
+        if (txData.status === 'success' && Array.isArray(txData.transactions)) {
+          const liveTxns: Transaction[] = txData.transactions.map((t: any) => ({
+            id: t.id,
+            userId: currentUser?.id || `usr_${clean}`,
+            title: t.description || 'Merchant Payment',
+            destinationType: 'veylo' as const,
+            recipientName: 'Online Merchant',
+            recipientIdentifier: t.reference,
+            destinationBankOrProvider: 'Veylo In-App Checkout',
+            sourceFunding: `Veylo Account: ${clean}`,
+            amountNgn: Number(t.amount_ngn),
+            destinationAmount: Number(t.amount_ngn),
+            destinationCurrency: t.currency || 'NGN',
+            feeNgn: Number(t.fee_ngn) || 0,
+            status: t.status || 'settled',
+            timestamp: new Date(t.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            reference: t.reference,
+            category: 'merchant' as const,
+          }));
+
+          setTransactions((prev) => {
+            const liveIds = new Set(liveTxns.map((l) => l.id));
+            const existingOther = prev.filter((p) => !liveIds.has(p.id));
+            return [...liveTxns, ...existingOther];
+          });
+        }
+      }
+    } catch (e) {
+      // Ignore background sync errors
+    }
+  }, [currentUser?.veyloAccountNumber, currentUser?.id]);
+
+  // Periodic and on-focus polling to keep balance synced live with Learnify purchases!
+  useEffect(() => {
+    if (!currentUser?.veyloAccountNumber) return;
+    syncLiveAccount();
+
+    const interval = setInterval(() => {
+      syncLiveAccount();
+    }, 3000);
+
+    const onFocus = () => syncLiveAccount();
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [currentUser?.veyloAccountNumber, syncLiveAccount]);
+
   return (
     <AccountContext.Provider
       value={{
@@ -321,6 +408,7 @@ export const AccountProvider: React.FC<{ children: React.ReactNode }> = ({ child
         revokeMandate,
         resetAllDemoData,
         setCustomUser,
+        syncLiveAccount,
       }}
     >
       {children}
