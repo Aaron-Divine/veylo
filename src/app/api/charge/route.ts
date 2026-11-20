@@ -5,6 +5,7 @@ import {
   debitAccount,
   createTransaction,
 } from '@/lib/veyloDb';
+import { calculateRafikiQuote } from '@/lib/rafikiRates';
 
 // CORS headers — Learnify runs on a different Vercel domain
 const CORS_HEADERS = {
@@ -86,18 +87,43 @@ export async function POST(req: NextRequest) {
       return failResponse('INCORRECT_PIN', 'Incorrect PIN. Please try again.');
     }
 
-    // ── 6. Check balance ──────────────────────────────────────────────────────
-    if (account.balance_ngn < amount) {
-      return failResponse('INSUFFICIENT_FUNDS', 'Insufficient wallet balance.');
+    // ── 6. Currency Conversion via Interledger Rafiki Rates Service ─────────
+    const destCurrency = currency.toUpperCase();
+    const sourceCurrency = (account.currency || 'NGN').toUpperCase();
+
+    let debitAmountNgn = amount;
+    let exchangeRate = 1.0;
+
+    if (destCurrency !== sourceCurrency) {
+      const quote = await calculateRafikiQuote({
+        destinationAmount: amount,
+        destinationCurrency: destCurrency,
+        sourceCurrency,
+      });
+
+      debitAmountNgn = quote.debitAmountNgn;
+      exchangeRate = quote.exchangeRate;
     }
 
-    // ── 7. Debit account (atomic) ─────────────────────────────────────────────
-    const debited = await debitAccount(account.id, amount);
+    // ── 7. Check balance ──────────────────────────────────────────────────────
+    if (account.balance_ngn < debitAmountNgn) {
+      const formattedDue = destCurrency !== 'NGN'
+        ? `${destCurrency} ${amount.toFixed(2)} (≈ ₦${debitAmountNgn.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} NGN at ₦${exchangeRate.toFixed(2)}/USD via Rafiki)`
+        : `₦${debitAmountNgn.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} NGN`;
+
+      return failResponse(
+        'INSUFFICIENT_FUNDS',
+        `Insufficient wallet balance. Total due is ${formattedDue}, but your current wallet balance is ₦${account.balance_ngn.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} NGN.`
+      );
+    }
+
+    // ── 8. Debit account (atomic) ─────────────────────────────────────────────
+    const debited = await debitAccount(account.id, debitAmountNgn);
     if (!debited) {
       return failResponse('INSUFFICIENT_FUNDS', 'Insufficient wallet balance or account could not be debited.');
     }
 
-    // ── 8. Resolve receiver account id (optional) ─────────────────────────────
+    // ── 9. Resolve receiver account id (optional) ─────────────────────────────
     let toAccountId: string | null = null;
     if (receiver_account) {
       const { getAccountByNumber: lookupReceiver } = await import('@/lib/veyloDb');
@@ -105,26 +131,34 @@ export async function POST(req: NextRequest) {
       toAccountId = receiver?.id ?? null;
     }
 
-    // ── 9. Create transaction record ──────────────────────────────────────────
+    // ── 10. Create transaction record ─────────────────────────────────────────
+    const formattedDesc = destCurrency !== 'NGN'
+      ? `${description} ($${amount.toFixed(2)} ${destCurrency} @ ₦${exchangeRate.toFixed(2)}/USD via Rafiki)`
+      : description;
+
     const txn = await createTransaction({
       reference,
       from_account_id: account.id,
       to_account_id: toAccountId,
-      amount_ngn: amount,
-      currency,
-      description,
+      amount_ngn: debitAmountNgn,
+      currency: 'NGN',
+      description: formattedDesc,
       status: 'settled',
       external_reference: reference,
     });
 
     const transactionId = txn ? `VYL-TXN-${txn.id.slice(0, 8).toUpperCase()}` : `VYL-TXN-${Date.now()}`;
 
-    // ── 10. Success ──────────────────────────────────────────────────────────
+    // ── 11. Success ──────────────────────────────────────────────────────────
     return corsJson({
       status: 'success',
       transaction_id: transactionId,
-      amount,
-      currency,
+      amount, // original merchant price (e.g. 69 USD)
+      currency: destCurrency, // original merchant currency (e.g. USD)
+      debited_amount_ngn: debitAmountNgn, // converted NGN amount (e.g. ~93,352.22)
+      debited_currency: 'NGN',
+      exchange_rate: exchangeRate,
+      protocol: 'Interledger Rafiki',
       reference,
     });
   } catch (err) {
