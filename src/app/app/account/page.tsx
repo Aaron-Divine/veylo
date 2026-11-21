@@ -181,7 +181,7 @@ export default function AccountIdentityPage() {
                       {showPin ? "1234" : "••••"}
                     </p>
                     <span className="text-[10px] text-slate-500">
-                      Used on Learnify and partner stores to authorize wallet debits
+                      Used on online merchant checkouts to authorize wallet debits
                     </span>
                   </div>
                   <Button

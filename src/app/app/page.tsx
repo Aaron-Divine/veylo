@@ -209,15 +209,6 @@ export default function AppDashboardPage() {
               >
                 Activity Ledger
               </Button>
-              <a
-                href="https://learnify-delta-six.vercel.app"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white bg-midnight-900 hover:bg-midnight-800 border border-midnight-700 transition-colors"
-              >
-                <span>Test Online Checkout (Learnify)</span>
-                <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
-              </a>
             </div>
           </div>
         </div>

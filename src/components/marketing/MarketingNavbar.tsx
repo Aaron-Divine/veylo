@@ -12,7 +12,6 @@ export const MarketingNavbar: React.FC = () => {
     { label: "Wallet Portal", href: "/app" },
     { label: "Subscriptions", href: "/app/subscriptions" },
     { label: "How It Works", href: "/#how-it-works" },
-    { label: "Learnify Store", href: "https://learnify-delta-six.vercel.app" },
   ];
 
   return (

@@ -75,15 +75,12 @@ export default function MarketingHomePage() {
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Link>
 
-                  <a
-                    href="https://learnify-delta-six.vercel.app"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <Link
+                    href="/auth/login"
                     className="inline-flex items-center justify-center font-semibold rounded-[12px] px-[20px] py-[14px] text-[14px] bg-white border border-[#CBD5E1] text-[#111B32] hover:bg-slate-50 transition-all active:scale-[0.98]"
                   >
-                    <span>Test on Learnify Checkout</span>
-                    <ExternalLink className="w-4 h-4 ml-2 text-slate-500" />
-                  </a>
+                    <span>Sign In to Wallet</span>
+                  </Link>
                 </div>
 
                 {/* Fast Trust Indicators */}
@@ -117,7 +114,7 @@ export default function MarketingHomePage() {
                       </span>
                     </div>
                     <span className="text-[10px] font-mono font-bold text-white bg-white/10 px-2 py-0.5 rounded-[6px]">
-                      Merchant: Learnify
+                      Merchant: Online Checkout
                     </span>
                   </div>
 
@@ -356,37 +353,7 @@ export default function MarketingHomePage() {
           </div>
         </section>
 
-        {/* ========================================================
-            LIVE SHOWCASE: LEARNIFY E-LEARNING STORE
-           ======================================================== */}
-        <section className="py-16 md:py-20 bg-white border-b border-[#E2E8F0]">
-          <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center space-y-6">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-700 text-xs font-bold font-mono">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-              LIVE PARTNER STORE
-            </span>
 
-            <h2 className="text-3xl sm:text-4xl font-serif text-[#111B32]">
-              See Veylo live in action on Learnify
-            </h2>
-
-            <p className="text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">
-              Learnify is an online learning platform that has replaced legacy credit card forms with Veylo. Experience the live checkout flow with your 10-digit account number right now.
-            </p>
-
-            <div className="pt-2">
-              <a
-                href="https://learnify-delta-six.vercel.app"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center font-bold rounded-xl px-6 py-3.5 text-sm bg-electric-cobalt hover:bg-electric-cobalt/90 text-white shadow-md transition-all active:scale-[0.98]"
-              >
-                <span>Open Learnify &amp; Buy a Course</span>
-                <ExternalLink className="w-4 h-4 ml-2" />
-              </a>
-            </div>
-          </div>
-        </section>
 
         {/* ========================================================
             FINAL CALL TO ACTION

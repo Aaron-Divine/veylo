@@ -218,24 +218,14 @@ export default function RegisterPage() {
               </p>
             </div>
 
-            <div className="space-y-3 pt-2">
-              <a
-                href="https://learnify-delta-six.vercel.app"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-3.5 px-4 rounded-xl bg-electric-cobalt text-white font-bold text-sm text-center flex items-center justify-center gap-2 hover:bg-electric-cobalt/90 transition-all shadow-md"
-              >
-                <span>Go to Learnify to Buy Course</span>
-                <ExternalLink className="w-4 h-4" />
-              </a>
-
+            <div className="pt-2">
               <Button
-                variant="outline"
+                variant="primary"
                 size="lg"
                 onClick={() => router.push("/app")}
-                className="w-full justify-center text-slate-700"
+                className="w-full justify-center"
               >
-                Open Veylo Dashboard
+                Go to Veylo Dashboard
               </Button>
             </div>
           </Card>

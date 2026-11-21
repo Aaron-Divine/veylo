@@ -58,11 +58,6 @@ export const MarketingFooter: React.FC = () => {
                   Activity Ledger
                 </Link>
               </li>
-              <li>
-                <a href="https://learnify-delta-six.vercel.app" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
-                  Live Merchant (Learnify) ↗
-                </a>
-              </li>
             </ul>
           </div>
 
