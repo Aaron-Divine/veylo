@@ -39,10 +39,10 @@ export async function POST(req: NextRequest) {
 
     // ── PAUSE / RESUME / REVOKE MANDATE ──────────────────────────────────────
     if (action === 'pause' || action === 'revoke' || action === 'resume') {
-      const mandateId = body.mandate_id || body.id;
+      const mandateId = body.mandate_id || body.id || body.mandate_reference || body.reference;
       if (!mandateId) {
         return NextResponse.json(
-          { status: 'failed', message: 'mandate_id is required' },
+          { status: 'failed', message: 'mandate_id or mandate_reference is required' },
           { status: 400, headers: CORS_HEADERS }
         );
       }
