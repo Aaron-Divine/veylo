@@ -4,6 +4,7 @@ import {
   verifyPin,
   debitAccount,
   createTransaction,
+  getWalletAddress,
 } from '@/lib/veyloDb';
 import { calculateRafikiQuote } from '@/lib/rafikiRates';
 
@@ -34,6 +35,7 @@ export async function POST(req: NextRequest) {
     // ── 2. Parse body ─────────────────────────────────────────────────────────
     let body: {
       veylo_account_number?: string;
+      wallet_address?: string;
       pin?: string;
       amount?: number;
       currency?: string;
@@ -50,6 +52,7 @@ export async function POST(req: NextRequest) {
 
     const {
       veylo_account_number,
+      wallet_address,
       pin,
       amount,
       currency = 'NGN',
@@ -82,11 +85,11 @@ export async function POST(req: NextRequest) {
     if (mandateRef) {
       const { getMandateByReference } = await import('@/lib/mandatesStore');
       const mandate = getMandateByReference(mandateRef);
-      if (mandate && mandate.status === 'revoked') {
+      if (mandate && (mandate.status === 'paused' || mandate.status === 'revoked')) {
         return corsJson({
           status: 'failed',
-          code: 'MANDATE_REVOKED',
-          message: `Recurring transfer blocked! Open Payments mandate ${mandateRef} was revoked by the account holder in Veylo. Automatic deduction stopped.`,
+          code: 'MANDATE_PAUSED',
+          message: `Recurring transfer declined! Open Payments mandate ${mandateRef} is currently PAUSED by the account holder in Veylo. Automatic deduction blocked until resumed.`,
         });
       }
     }
@@ -95,6 +98,22 @@ export async function POST(req: NextRequest) {
     const account = await getAccountByNumber(veylo_account_number);
     if (!account) {
       return failResponse('ACCOUNT_NOT_FOUND', 'No active Veylo account found for the provided account number.');
+    }
+
+    // ── 4.5 Verify Wallet Address Confirmation (if provided) ─────────────────
+    if (wallet_address && typeof wallet_address === 'string' && wallet_address.trim()) {
+      const cleanInput = wallet_address.trim().toLowerCase();
+      const accountWallet = getWalletAddress(account).toLowerCase();
+      const rawInputSlug = cleanInput.replace(/^\$ilp-veylowallet-/, '');
+      const rawAccountSlug = accountWallet.replace(/^\$ilp-veylowallet-/, '');
+
+      const isMatch = cleanInput === accountWallet || rawInputSlug === rawAccountSlug;
+      if (!isMatch) {
+        return failResponse(
+          'WALLET_ADDRESS_MISMATCH',
+          `Wallet address confirmation failed. The provided wallet address name does not match this account number.`
+        );
+      }
     }
 
     // ── 5. Verify PIN (or mandate authorization) ───────────────────────────────

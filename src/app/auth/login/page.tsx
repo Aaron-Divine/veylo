@@ -60,7 +60,7 @@ export default function LoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          account_number: cleanAcc,
+          identifier: cleanAcc,
           pin: cleanPin,
         }),
       });
@@ -87,7 +87,7 @@ export default function LoginPage() {
         veyloAccountNumber: formattedAcc,
         isVerified: true,
         location: "Lagos, Nigeria",
-        openPaymentsAddress: `https://ilp.interledger-test.dev/${acc.owner_name.toLowerCase().replace(/\s+/g, "")}`,
+        openPaymentsAddress: acc.wallet_address || `$ilp-veylowallet-${acc.owner_name.toLowerCase().replace(/[^a-z0-9_-]/g, "")}`,
         connectedBank: {
           bankName: "Veylo Simulated Bank",
           accountNumber: "••" + acc.account_number.slice(-4),
@@ -207,22 +207,22 @@ export default function LoginPage() {
 
               <form onSubmit={handleAccountLogin} className="space-y-4">
                 <Input
-                  label="10-Digit Veylo Account Number"
+                  label="10-Digit Account Number or Wallet Address"
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value)}
-                  placeholder="e.g. 10-digit account number"
+                  placeholder="e.g. 482 193 7604 or $ilp-veylowallet-..."
                   required
                   leftAddon={<UserCheck className="w-4 h-4 text-slate-400" />}
-                  helperText="Your 10-digit number given at registration"
+                  helperText="Your 10-digit number, wallet address ($ilp-veylowallet-...), or email"
                 />
 
                 <Input
                   label="4-Digit Wallet PIN"
                   type="password"
                   value={pin}
-                  onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
                   placeholder="4-digit secret PIN"
-                  maxLength={6}
+                  maxLength={4}
                   required
                   leftAddon={<Lock className="w-4 h-4 text-slate-400" />}
                 />

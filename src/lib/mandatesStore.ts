@@ -86,11 +86,23 @@ export function getMandateByReference(reference: string): StoredMandate | null {
 }
 
 export function revokeMandate(mandateIdOrRef: string): StoredMandate | null {
+  return updateMandateStatus(mandateIdOrRef, 'paused');
+}
+
+export function pauseMandate(mandateIdOrRef: string): StoredMandate | null {
+  return updateMandateStatus(mandateIdOrRef, 'paused');
+}
+
+export function resumeMandate(mandateIdOrRef: string): StoredMandate | null {
+  return updateMandateStatus(mandateIdOrRef, 'active');
+}
+
+export function updateMandateStatus(mandateIdOrRef: string, status: 'active' | 'paused' | 'revoked'): StoredMandate | null {
   loadFromFile();
   const clean = mandateIdOrRef.trim();
   for (const [id, m] of memoryCache.entries()) {
     if (m.id === clean || m.mandateReference === clean) {
-      m.status = 'revoked';
+      m.status = status;
       memoryCache.set(id, m);
       saveToFile();
       return m;

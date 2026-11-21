@@ -28,10 +28,10 @@ export default function RegisterPage() {
 
   // All inputs start completely blank with soft placeholders
   const [fullName, setFullName] = useState("");
+  const [walletSlug, setWalletSlug] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [pin, setPin] = useState("");
-  const [depositAmount, setDepositAmount] = useState(100000); // ₦100k demo deposit
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -43,6 +43,7 @@ export default function RegisterPage() {
     balance_ngn: number;
     owner_name: string;
     owner_email: string;
+    wallet_address?: string;
   } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,30 +51,32 @@ export default function RegisterPage() {
     setErrorMsg(null);
 
     if (!fullName.trim()) {
-      setErrorMsg("Please enter your legal name or username.");
+      setErrorMsg("Please enter your name or username.");
       return;
     }
     if (!email.trim() || !email.includes("@")) {
       setErrorMsg("Please enter a valid email address.");
       return;
     }
-    if (!pin.trim() || pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)) {
-      setErrorMsg("Please create a 4-digit numeric PIN.");
+    if (!pin.trim() || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+      setErrorMsg("Please create exactly a 4-digit numeric PIN.");
       return;
     }
 
     setIsLoading(true);
 
     try {
+      const chosenSlug = (walletSlug || fullName).toLowerCase().replace(/[^a-z0-9_-]/g, "");
+
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: fullName.trim(),
+          wallet_name: chosenSlug,
           email: email.trim().toLowerCase(),
           phone: phone.trim(),
           pin: pin.trim(),
-          initial_balance_ngn: depositAmount,
         }),
       });
 
@@ -102,7 +105,7 @@ export default function RegisterPage() {
         veyloAccountNumber: formattedAcc,
         isVerified: true,
         location: "Lagos, Nigeria",
-        openPaymentsAddress: `https://ilp.interledger-test.dev/${acc.owner_name.toLowerCase().replace(/\s+/g, "")}`,
+        openPaymentsAddress: acc.wallet_address || `$ilp-veylowallet-${chosenSlug}`,
         connectedBank: {
           bankName: "Veylo Simulated Bank",
           accountNumber: "••" + acc.account_number.slice(-4),
@@ -110,8 +113,8 @@ export default function RegisterPage() {
           currency: "NGN",
           status: "connected",
         },
-        totalBalanceNgn: acc.balance_ngn,
-        availableBalanceNgn: acc.balance_ngn,
+        totalBalanceNgn: acc.balance_ngn || 0,
+        availableBalanceNgn: acc.balance_ngn || 0,
         currency: "NGN",
       };
 
@@ -154,10 +157,10 @@ export default function RegisterPage() {
                 <Check className="w-8 h-8" />
               </div>
               <h1 className="text-2xl sm:text-3xl font-black text-midnight-950 font-sans">
-                Account Created & Funded!
+                Account &amp; Wallet Created!
               </h1>
               <p className="text-xs text-slate-500">
-                Your unique 10-digit Veylo Account Number is registered and ready to use.
+                Your unique 10-digit Veylo Account Number has been assigned to your Open Payments wallet address.
               </p>
             </div>
 
@@ -165,9 +168,9 @@ export default function RegisterPage() {
             <div className="p-5 rounded-2xl bg-midnight-950 text-white space-y-3 shadow-lg">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-mono uppercase tracking-wider text-acid-lime font-bold">
-                  Your Veylo Account Number
+                  Your 10-Digit Account Number
                 </span>
-                <span className="text-[10px] font-mono text-slate-400">Unique Identifier</span>
+                <span className="text-[10px] font-mono text-slate-400">Portable Identity</span>
               </div>
 
               <div className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/10">
@@ -185,28 +188,33 @@ export default function RegisterPage() {
                 </button>
               </div>
 
+              <div className="p-2.5 rounded-xl bg-midnight-900 border border-midnight-800 text-xs">
+                <span className="text-[10px] font-mono text-slate-400 block uppercase">Assigned Wallet Address</span>
+                <span className="font-mono text-acid-lime font-bold text-xs break-all">
+                  {createdAccount.wallet_address || `$ilp-veylowallet-${createdAccount.owner_name.toLowerCase().replace(/[^a-z0-9_-]/g, "")}`}
+                </span>
+              </div>
+
               <div className="pt-2 border-t border-white/10 flex items-center justify-between text-xs">
                 <div>
-                  <span className="text-[10px] text-slate-400 block uppercase">Simulated Balance</span>
-                  <span className="font-bold text-acid-lime text-base font-mono">
-                    ₦{createdAccount.balance_ngn.toLocaleString()}
-                  </span>
+                  <span className="text-[10px] text-slate-400 block uppercase">Account Holder</span>
+                  <span className="font-semibold text-white">{createdAccount.owner_name}</span>
                 </div>
                 <div className="text-right">
-                  <span className="text-[10px] text-slate-400 block uppercase">Owner</span>
-                  <span className="font-semibold text-white">{createdAccount.owner_name}</span>
+                  <span className="text-[10px] text-slate-400 block uppercase">Security PIN</span>
+                  <span className="font-mono text-acid-lime font-bold">4-Digit Hashed</span>
                 </div>
               </div>
             </div>
 
-            {/* Learnify Instruction Callout */}
-            <div className="p-4 rounded-xl bg-electric-cobalt/10 border border-electric-cobalt/20 text-xs space-y-1.5">
-              <div className="font-bold text-electric-cobalt flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-amber-500" />
-                <span>Ready to use on Learnify!</span>
+            {/* Deposit notice callout */}
+            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs space-y-1.5">
+              <div className="font-bold text-emerald-700 flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-emerald-600" />
+                <span>Next Step: Deposit Test Funds</span>
               </div>
               <p className="text-slate-600 leading-relaxed">
-                Copy your 10-digit number above and use it with your 4-digit PIN at Learnify checkout to purchase any course.
+                Log into your dashboard to deposit simulated funds in any world currency (USD, EUR, GBP, NGN) converted with live Rafiki FX rates.
               </p>
             </div>
 
@@ -259,6 +267,17 @@ export default function RegisterPage() {
                 leftAddon={<UserCheck className="w-4 h-4 text-slate-400" />}
               />
 
+              <div className="space-y-1">
+                <Input
+                  label="Wallet Address Name"
+                  value={walletSlug}
+                  onChange={(e) => setWalletSlug(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))}
+                  placeholder="e.g. aaron, divine, tomi"
+                  leftAddon={<span className="text-xs font-mono font-bold text-electric-cobalt">$</span>}
+                  helperText={`Your wallet address will be: $ilp-veylowallet-${walletSlug || "yourname"}`}
+                />
+              </div>
+
               <Input
                 label="Email Address"
                 type="email"
@@ -281,39 +300,13 @@ export default function RegisterPage() {
                 label="Create 4-Digit Wallet PIN"
                 type="password"
                 value={pin}
-                onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
                 placeholder="4-digit secret PIN"
-                maxLength={6}
+                maxLength={4}
                 required
                 leftAddon={<Lock className="w-4 h-4 text-slate-400" />}
-                helperText="Required to authorize debits and Learnify course purchases"
+                helperText="4 numeric digits required to authorize debits and course purchases"
               />
-
-              {/* Simulated Deposit Amount Selector */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                  Simulated Deposit Amount (₦)
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[50000, 100000, 250000].map((amt) => (
-                    <button
-                      key={amt}
-                      type="button"
-                      onClick={() => setDepositAmount(amt)}
-                      className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all ${
-                        depositAmount === amt
-                          ? "bg-electric-cobalt text-white border-electric-cobalt shadow-sm"
-                          : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
-                      }`}
-                    >
-                      ₦{amt.toLocaleString()}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-[11px] text-slate-400 mt-1">
-                  Free test funds deposited immediately to your new account.
-                </p>
-              </div>
 
               <Button
                 type="submit"
@@ -323,7 +316,7 @@ export default function RegisterPage() {
                 className="w-full justify-center pt-3"
                 rightIcon={<ArrowRight className="w-4 h-4" />}
               >
-                Create & Fund Account
+                Create Veylo Account
               </Button>
             </form>
 

@@ -1,7 +1,7 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { supabase } from '@/lib/supabase';
-import { getAccountByNumber } from '@/lib/veyloDb';
+import { getAccountByIdentifier, getWalletAddress, getDisplayName } from '@/lib/veyloDb';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -18,6 +18,7 @@ export async function POST(req: NextRequest) {
     let body: {
       account_number?: string;
       email?: string;
+      identifier?: string;
       pin?: string;
     };
 
@@ -27,25 +28,18 @@ export async function POST(req: NextRequest) {
       return corsJson({ status: 'failed', code: 'INVALID_BODY', message: 'Request body must be valid JSON.' }, 400);
     }
 
-    const { account_number, email, pin } = body;
+    const { account_number, email, identifier, pin } = body;
+    const lookupKey = (identifier || account_number || email || '').trim();
 
     if (!pin || typeof pin !== 'string') {
-      return corsJson({ status: 'failed', code: 'MISSING_PIN', message: 'PIN is required.' }, 400);
+      return corsJson({ status: 'failed', code: 'MISSING_PIN', message: '4-digit PIN is required.' }, 400);
     }
 
-    let account = null;
-
-    if (account_number && typeof account_number === 'string') {
-      account = await getAccountByNumber(account_number);
-    } else if (email && typeof email === 'string') {
-      const { data } = await supabase
-        .from('veylo_accounts')
-        .select('*')
-        .eq('owner_email', email.trim().toLowerCase())
-        .eq('is_active', true)
-        .single();
-      account = data;
+    if (!lookupKey) {
+      return corsJson({ status: 'failed', code: 'MISSING_IDENTIFIER', message: 'Account number, wallet address, or email is required.' }, 400);
     }
+
+    const account = await getAccountByIdentifier(lookupKey);
 
     if (!account) {
       return corsJson({
@@ -55,7 +49,7 @@ export async function POST(req: NextRequest) {
       }, 404);
     }
 
-    // Verify PIN with bcrypt
+    // Verify 4-digit PIN with bcrypt
     const pinValid = await bcrypt.compare(pin.trim(), account.pin_hash);
     if (!pinValid) {
       return corsJson({
@@ -65,13 +59,17 @@ export async function POST(req: NextRequest) {
       }, 401);
     }
 
+    const walletAddress = getWalletAddress(account);
+    const displayName = getDisplayName(account.owner_name);
+
     return corsJson({
       status: 'success',
       message: 'Login successful.',
       account: {
         id: account.id,
         account_number: account.account_number,
-        owner_name: account.owner_name,
+        wallet_address: walletAddress,
+        owner_name: displayName,
         owner_email: account.owner_email,
         balance_ngn: account.balance_ngn,
         currency: account.currency,

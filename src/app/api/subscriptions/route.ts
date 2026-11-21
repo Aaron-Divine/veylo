@@ -3,7 +3,7 @@ import {
   saveMandate,
   getAllMandates,
   getMandatesByAccount,
-  revokeMandate,
+  updateMandateStatus,
   StoredMandate,
 } from '@/lib/mandatesStore';
 
@@ -37,24 +37,29 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const action = body.action || 'create';
 
-    // ── REVOKE MANDATE ────────────────────────────────────────────────────────
-    if (action === 'revoke') {
+    // ── PAUSE / RESUME / REVOKE MANDATE ──────────────────────────────────────
+    if (action === 'pause' || action === 'revoke' || action === 'resume') {
       const mandateId = body.mandate_id || body.id;
       if (!mandateId) {
         return NextResponse.json(
-          { status: 'failed', message: 'mandate_id is required to revoke' },
+          { status: 'failed', message: 'mandate_id is required' },
           { status: 400, headers: CORS_HEADERS }
         );
       }
 
-      const revoked = revokeMandate(mandateId);
+      const targetStatus = action === 'resume' ? 'active' : 'paused';
+      const updated = updateMandateStatus(mandateId, targetStatus);
+
+      const msg = targetStatus === 'active'
+        ? 'Mandate resumed. Future recurring debits will succeed.'
+        : 'Mandate paused. Merchant debits will decline until you press resume in Veylo.';
 
       return NextResponse.json(
         {
           status: 'success',
-          message: 'Open Payments recurring mandate revoked successfully. Future automatic transfers stopped.',
+          message: msg,
           mandate_id: mandateId,
-          subscription: revoked,
+          subscription: updated,
         },
         { headers: CORS_HEADERS }
       );
