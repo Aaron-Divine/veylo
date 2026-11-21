@@ -4,6 +4,7 @@ import {
   getAllMandates,
   getMandatesByAccount,
   updateMandateStatus,
+  persistMandateStatusToDb,
   StoredMandate,
 } from '@/lib/mandatesStore';
 
@@ -49,6 +50,7 @@ export async function POST(req: NextRequest) {
 
       const targetStatus = action === 'resume' ? 'active' : 'paused';
       const updated = updateMandateStatus(mandateId, targetStatus);
+      await persistMandateStatusToDb(mandateId, targetStatus);
 
       const msg = targetStatus === 'active'
         ? 'Mandate resumed. Future recurring debits will succeed.'

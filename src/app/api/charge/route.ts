@@ -83,9 +83,12 @@ export async function POST(req: NextRequest) {
 
     // ── 3.5 Check Mandate Status (Recurring Mandate Enforcement) ──────────────
     if (mandateRef) {
-      const { getMandateByReference } = await import('@/lib/mandatesStore');
+      const { getMandateByReference, checkMandateStatusFromDb } = await import('@/lib/mandatesStore');
       const mandate = getMandateByReference(mandateRef);
-      if (mandate && (mandate.status === 'paused' || mandate.status === 'revoked')) {
+      const dbStatus = await checkMandateStatusFromDb(mandateRef);
+
+      const effectiveStatus = dbStatus || mandate?.status || 'active';
+      if (effectiveStatus === 'paused' || effectiveStatus === 'revoked') {
         return corsJson({
           status: 'failed',
           code: 'MANDATE_PAUSED',

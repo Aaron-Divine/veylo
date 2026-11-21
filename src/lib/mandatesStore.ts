@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { supabase } from './supabase';
 
 export interface StoredMandate {
   id: string;
@@ -105,8 +106,71 @@ export function updateMandateStatus(mandateIdOrRef: string, status: 'active' | '
       m.status = status;
       memoryCache.set(id, m);
       saveToFile();
+      // Asynchronously persist to Supabase
+      persistMandateStatusToDb(m.mandateReference, status, m.accountNumber).catch(() => {});
       return m;
     }
+  }
+  // Even if not in local cache, persist status to Supabase so other serverless instances know
+  persistMandateStatusToDb(clean, status).catch(() => {});
+  return null;
+}
+
+export async function persistMandateStatusToDb(
+  mandateRef: string,
+  status: 'active' | 'paused' | 'revoked',
+  accountNumber?: string
+): Promise<void> {
+  try {
+    let fromAccountId: string | null = null;
+    if (accountNumber) {
+      const { data: acc } = await supabase
+        .from('veylo_accounts')
+        .select('id')
+        .eq('account_number', accountNumber.replace(/\s+/g, ''))
+        .maybeSingle();
+      if (acc) fromAccountId = acc.id;
+    }
+    if (!fromAccountId) {
+      const { data: anyAcc } = await supabase.from('veylo_accounts').select('id').limit(1).maybeSingle();
+      if (anyAcc) fromAccountId = anyAcc.id;
+    }
+
+    if (!fromAccountId) return;
+
+    await supabase.from('veylo_transactions').insert({
+      reference: `mandate_status_${mandateRef.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}`,
+      from_account_id: fromAccountId,
+      amount_ngn: 0,
+      fee_ngn: 0,
+      currency: 'NGN',
+      description: `MANDATE_STATUS:${mandateRef}:${status}`,
+      status: status,
+      external_reference: mandateRef,
+    });
+  } catch (e) {
+    // silently ignore errors
+  }
+}
+
+export async function checkMandateStatusFromDb(mandateRef: string): Promise<'active' | 'paused' | 'revoked' | null> {
+  try {
+    const clean = mandateRef.trim();
+    const { data } = await supabase
+      .from('veylo_transactions')
+      .select('status')
+      .eq('external_reference', clean)
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (data && data.length > 0 && data[0].status) {
+      const st = data[0].status as 'active' | 'paused' | 'revoked';
+      if (st === 'paused' || st === 'revoked' || st === 'active') {
+        return st;
+      }
+    }
+  } catch (e) {
+    // ignore
   }
   return null;
 }
