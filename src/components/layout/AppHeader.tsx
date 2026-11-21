@@ -73,9 +73,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <div className="relative">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={currentUser.avatarUrl}
+              src={currentUser.avatarUrl || "/avatars/male.svg"}
               alt={currentUser.name}
-              className="w-7 h-7 rounded-full object-cover ring-1 ring-slate-300 group-hover:ring-[#3D5BFF] transition-all"
+              className="w-7 h-7 rounded-full object-cover ring-1 ring-slate-300 group-hover:ring-[#3D5BFF] transition-all bg-white"
             />
             <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#10B981] rounded-full border border-white" />
           </div>

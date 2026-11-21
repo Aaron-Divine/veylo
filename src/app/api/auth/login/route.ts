@@ -1,7 +1,7 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { supabase } from '@/lib/supabase';
-import { getAccountByIdentifier, getWalletAddress, getDisplayName } from '@/lib/veyloDb';
+import { getAccountByIdentifier, getWalletAddress, getDisplayName, getAvatarUrl } from '@/lib/veyloDb';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
         wallet_address: walletAddress,
         owner_name: displayName,
         owner_email: account.owner_email,
+        avatar_url: getAvatarUrl(account),
         balance_ngn: account.balance_ngn,
         currency: account.currency,
         is_active: account.is_active,

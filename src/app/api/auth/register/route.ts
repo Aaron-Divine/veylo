@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
       name?: string;
       wallet_name?: string;
       wallet_address?: string;
+      gender?: string;
       email?: string;
       phone?: string;
       pin?: string;
@@ -36,7 +37,7 @@ export async function POST(req: NextRequest) {
       return corsJson({ status: 'failed', code: 'INVALID_BODY', message: 'Request body must be valid JSON.' }, 400);
     }
 
-    const { name, wallet_name, wallet_address, email, pin } = body;
+    const { name, wallet_name, wallet_address, email, pin, gender } = body;
 
     if (!name || typeof name !== 'string' || !name.trim()) {
       return corsJson({ status: 'failed', code: 'MISSING_FIELD', message: 'Full name or username is required.' }, 400);
@@ -70,8 +71,9 @@ export async function POST(req: NextRequest) {
       accountNumber = generateAccountNumber();
     }
 
-    // Composite name storing display name + canonical wallet address
-    const compositeOwnerName = `${name.trim()}:::${canonicalWalletAddress}`;
+    // Composite name storing display name + canonical wallet address + gender avatar metadata
+    const userGender = (gender === 'female') ? 'female' : 'male';
+    const compositeOwnerName = `${name.trim()}:::${canonicalWalletAddress}:::${userGender}`;
 
     // Insert into Supabase veylo_accounts with 0 initial balance (deposit simulation is available on dashboard)
     const { data, error } = await supabase
@@ -101,6 +103,8 @@ export async function POST(req: NextRequest) {
         ...data,
         owner_name: getDisplayName(data.owner_name),
         wallet_address: canonicalWalletAddress,
+        gender: userGender,
+        avatar_url: userGender === 'female' ? '/avatars/female.svg' : '/avatars/male.svg',
       },
     }, 201);
   } catch (err) {

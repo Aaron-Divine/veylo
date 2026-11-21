@@ -84,6 +84,7 @@ export default function LoginPage() {
         email: acc.owner_email,
         handle: `@${acc.owner_name.toLowerCase().replace(/\s+/g, "")}`,
         role: "consumer",
+        avatarUrl: acc.avatar_url || "/avatars/male.svg",
         veyloAccountNumber: formattedAcc,
         isVerified: true,
         location: "Lagos, Nigeria",

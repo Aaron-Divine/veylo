@@ -17,7 +17,7 @@ export const DEMO_ACCOUNTS: UserProfile[] = [
     veyloAccountNumber: "482 193 7604",
     isVerified: true,
     location: "Lagos, Nigeria",
-    avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+    avatarUrl: "/avatars/female.svg",
     openPaymentsAddress: "https://ilp.interledger-test.dev/tomiade",
     connectedBank: {
       bankName: "Guaranty Trust Bank (GTBank)",
@@ -40,7 +40,7 @@ export const DEMO_ACCOUNTS: UserProfile[] = [
     veyloAccountNumber: "718 902 4410",
     isVerified: true,
     location: "Abuja, Nigeria",
-    avatarUrl: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=150&auto=format&fit=crop&q=80",
+    avatarUrl: "/avatars/female.svg",
     openPaymentsAddress: "https://ilp.interledger-test.dev/chioma",
     connectedBank: {
       bankName: "Access Bank PLC",
@@ -63,7 +63,7 @@ export const DEMO_ACCOUNTS: UserProfile[] = [
     veyloAccountNumber: "904 112 5580",
     isVerified: true,
     location: "Ibadan, Nigeria",
-    avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+    avatarUrl: "/avatars/male.svg",
     openPaymentsAddress: "https://ilp.interledger-test.dev/babsade",
     connectedBank: {
       bankName: "Zenith Bank PLC",
@@ -86,7 +86,7 @@ export const DEMO_ACCOUNTS: UserProfile[] = [
     veyloAccountNumber: "301 884 9201",
     isVerified: true,
     location: "London, United Kingdom",
-    avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+    avatarUrl: "/avatars/male.svg",
     openPaymentsAddress: "https://ilp.interledger-test.dev/arthur",
     connectedBank: {
       bankName: "Barclays Bank UK",
@@ -113,7 +113,7 @@ export const DEMO_ACCOUNTS: UserProfile[] = [
     veyloAccountNumber: "702 441 8900",
     isVerified: true,
     location: "Berlin, Germany",
-    avatarUrl: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=150&auto=format&fit=crop&q=80",
+    avatarUrl: "/avatars/male.svg",
     openPaymentsAddress: "https://ilp.interledger-test.dev/kafeartisan",
     connectedBank: {
       bankName: "Commerzbank AG",

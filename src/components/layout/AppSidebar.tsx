@@ -50,9 +50,9 @@ export const AppSidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
           <div className="relative">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={currentUser.avatarUrl}
+              src={currentUser.avatarUrl || "/avatars/male.svg"}
               alt={currentUser.name}
-              className="w-10 h-10 rounded-full object-cover ring-2 ring-electric-cobalt/40"
+              className="w-10 h-10 rounded-full object-cover ring-2 ring-electric-cobalt/40 bg-white"
             />
             <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-acid-lime rounded-full border-2 border-midnight-900 flex items-center justify-center">
               <CheckCircle2 className="w-2.5 h-2.5 text-midnight-950" />

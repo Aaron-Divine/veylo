@@ -39,6 +39,22 @@ export function getDisplayName(rawName?: string): string {
   return rawName.trim();
 }
 
+/**
+ * Derives user avatar SVG based on registered gender
+ */
+export function getAvatarUrl(account: { owner_name?: string }): string {
+  if (account.owner_name && account.owner_name.includes(':::')) {
+    const parts = account.owner_name.split(':::');
+    if (parts[2] && parts[2].trim().toLowerCase() === 'female') {
+      return '/avatars/female.svg';
+    }
+    if (parts[2] && parts[2].trim().toLowerCase() === 'male') {
+      return '/avatars/male.svg';
+    }
+  }
+  return '/avatars/male.svg';
+}
+
 export interface VeyloTransaction {
   id: string;
   reference: string;

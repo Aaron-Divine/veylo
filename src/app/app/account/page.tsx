@@ -90,9 +90,17 @@ export default function AccountIdentityPage() {
               </div>
 
               <div className="flex items-end justify-between pt-4 border-t border-midnight-900 relative z-10 text-xs">
-                <div>
-                  <p className="font-bold text-white text-sm">{currentUser.name}</p>
-                  <p className="text-acid-lime font-mono">{currentUser.handle}</p>
+                <div className="flex items-center gap-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={currentUser.avatarUrl || "/avatars/male.svg"}
+                    alt={currentUser.name}
+                    className="w-10 h-10 rounded-full border border-midnight-700 bg-white"
+                  />
+                  <div>
+                    <p className="font-bold text-white text-sm">{currentUser.name}</p>
+                    <p className="text-acid-lime font-mono">{currentUser.handle}</p>
+                  </div>
                 </div>
                 <div className="text-right font-mono text-[10px] text-slate-400">
                   <span>ILP v4 COMPLIANT</span>

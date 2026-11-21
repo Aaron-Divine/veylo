@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="bgFemale" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#111B32"/>
+    </linearGradient>
+    <linearGradient id="skinF" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FED7AA"/>
+      <stop offset="100%" stop-color="#FB923C"/>
+    </linearGradient>
+  </defs>
+  <!-- Background Circle -->
+  <circle cx="60" cy="60" r="60" fill="url(#bgFemale)"/>
+  <!-- Hair Back (Long) -->
+  <path d="M30 46 C24 64 26 84 32 98 C36 94 40 88 40 76 Z" fill="#1E1B4B"/>
+  <path d="M90 46 C96 64 94 84 88 98 C84 94 80 88 80 76 Z" fill="#1E1B4B"/>
+  <!-- Body/Shoulders -->
+  <path d="M22 108 C25 86 42 78 60 78 C78 78 95 86 98 108 Z" fill="#D8F15B"/>
+  <path d="M48 78 C48 86 72 86 72 78 Z" fill="#F43F5E"/>
+  <!-- Neck -->
+  <rect x="53" y="62" width="14" height="18" rx="4" fill="url(#skinF)"/>
+  <!-- Head -->
+  <rect x="36" y="24" width="48" height="48" rx="24" fill="url(#skinF)"/>
+  <!-- Hair Top & Bangs (Female) -->
+  <path d="M34 38 C34 18 46 14 60 14 C74 14 86 18 86 38 C86 28 76 22 60 22 C44 22 34 28 34 38 Z" fill="#1E1B4B"/>
+  <path d="M34 36 C42 42 50 36 60 30 C70 36 78 42 86 36 C86 26 78 22 60 22 C42 22 34 26 34 36 Z" fill="#1E1B4B"/>
+  <!-- Eyes -->
+  <circle cx="48" cy="46" r="3.5" fill="#0F172A"/>
+  <circle cx="72" cy="46" r="3.5" fill="#0F172A"/>
+  <circle cx="49" cy="45" r="1" fill="#FFFFFF"/>
+  <circle cx="73" cy="45" r="1" fill="#FFFFFF"/>
+  <!-- Lashes / Eyeliner -->
+  <path d="M44 43 Q48 41 52 43" stroke="#0F172A" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+  <path d="M68 43 Q72 41 76 43" stroke="#0F172A" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+  <!-- Blush -->
+  <circle cx="43" cy="52" r="3.5" fill="#F43F5E" opacity="0.35"/>
+  <circle cx="77" cy="52" r="3.5" fill="#F43F5E" opacity="0.35"/>
+  <!-- Friendly Smile with Lip tint -->
+  <path d="M52 56 Q60 63 68 56" stroke="#E11D48" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <!-- Earrings -->
+  <circle cx="34" cy="54" r="2.5" fill="#FCD34D"/>
+  <circle cx="86" cy="54" r="2.5" fill="#FCD34D"/>
+</svg>

@@ -29,6 +29,7 @@ export default function RegisterPage() {
   // All inputs start completely blank with soft placeholders
   const [fullName, setFullName] = useState("");
   const [walletSlug, setWalletSlug] = useState("");
+  const [gender, setGender] = useState<"male" | "female">("male");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [pin, setPin] = useState("");
@@ -44,6 +45,7 @@ export default function RegisterPage() {
     owner_name: string;
     owner_email: string;
     wallet_address?: string;
+    avatar_url?: string;
   } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -74,6 +76,7 @@ export default function RegisterPage() {
         body: JSON.stringify({
           name: fullName.trim(),
           wallet_name: chosenSlug,
+          gender: gender,
           email: email.trim().toLowerCase(),
           phone: phone.trim(),
           pin: pin.trim(),
@@ -102,6 +105,7 @@ export default function RegisterPage() {
         email: acc.owner_email,
         handle: `@${acc.owner_name.toLowerCase().replace(/\s+/g, "")}`,
         role: "consumer",
+        avatarUrl: acc.avatar_url || (gender === "female" ? "/avatars/female.svg" : "/avatars/male.svg"),
         veyloAccountNumber: formattedAcc,
         isVerified: true,
         location: "Lagos, Nigeria",
@@ -196,9 +200,17 @@ export default function RegisterPage() {
               </div>
 
               <div className="pt-2 border-t border-white/10 flex items-center justify-between text-xs">
-                <div>
-                  <span className="text-[10px] text-slate-400 block uppercase">Account Holder</span>
-                  <span className="font-semibold text-white">{createdAccount.owner_name}</span>
+                <div className="flex items-center gap-2.5">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={createdAccount.avatar_url || (gender === "female" ? "/avatars/female.svg" : "/avatars/male.svg")}
+                    alt="Profile Avatar"
+                    className="w-8 h-8 rounded-full border border-white/20"
+                  />
+                  <div>
+                    <span className="text-[10px] text-slate-400 block uppercase">Account Holder</span>
+                    <span className="font-semibold text-white">{createdAccount.owner_name}</span>
+                  </div>
                 </div>
                 <div className="text-right">
                   <span className="text-[10px] text-slate-400 block uppercase">Security PIN</span>
@@ -285,6 +297,56 @@ export default function RegisterPage() {
                 placeholder="phone number e.g. +234..."
                 leftAddon={<Phone className="w-4 h-4 text-slate-400" />}
               />
+
+              {/* Gender & Profile Avatar Selection */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-700">
+                  Select Gender (Profile Avatar)
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setGender("male")}
+                    className={`p-3 rounded-xl border flex items-center gap-3 transition-all cursor-pointer ${
+                      gender === "male"
+                        ? "border-[#3D5BFF] bg-[#3D5BFF]/10 ring-2 ring-[#3D5BFF]"
+                        : "border-slate-200 bg-slate-50 hover:bg-slate-100"
+                    }`}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/avatars/male.svg"
+                      alt="Male Avatar"
+                      className="w-10 h-10 rounded-full border border-slate-300 bg-white"
+                    />
+                    <div className="text-left">
+                      <span className="text-xs font-bold text-midnight-950 block">Male</span>
+                      <span className="text-[10px] text-slate-500 font-mono">Avatar: Male</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setGender("female")}
+                    className={`p-3 rounded-xl border flex items-center gap-3 transition-all cursor-pointer ${
+                      gender === "female"
+                        ? "border-[#8B5CF6] bg-[#8B5CF6]/10 ring-2 ring-[#8B5CF6]"
+                        : "border-slate-200 bg-slate-50 hover:bg-slate-100"
+                    }`}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/avatars/female.svg"
+                      alt="Female Avatar"
+                      className="w-10 h-10 rounded-full border border-slate-300 bg-white"
+                    />
+                    <div className="text-left">
+                      <span className="text-xs font-bold text-midnight-950 block">Female</span>
+                      <span className="text-[10px] text-slate-500 font-mono">Avatar: Female</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
 
               <Input
                 label="Create 4-Digit Wallet PIN"
